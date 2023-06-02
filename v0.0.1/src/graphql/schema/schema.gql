@@ -1,0 +1,18 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Query {
+  getHello: String!
+  getBoard: String!
+}
+
+type Mutation {
+  createBoard(body: UserDto!): String!
+}
+
+input UserDto {
+  name: String!
+  age: Int!
+  phone: String!
+}
