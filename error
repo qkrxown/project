@@ -1,0 +1,13 @@
+우분투에서 발생한느 에러 모음
+
+일단 개발 환경이 맞지않아 npm i 해서 라이브러리 한번에 다운이 안되었음
+
+sudo apt install npm
+sudo apt install nodejs 시 12버전 나옴
+
+최소 16이상해야 nest 원활하게 돌림 
+방법 nvm (node version Manager) 로다운
+
+이후  nest new 프로젝트명 으로 시작
+
+
