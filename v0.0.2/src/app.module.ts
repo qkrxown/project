@@ -3,11 +3,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GraphqlModule } from './graphql/graphql.module';
 import { DbModule } from './db/db.module';
+import { WebsocketModule } from './websocket/websocket.module';
+
 
 @Module({
   imports: [
     GraphqlModule,
-  DbModule],
+  DbModule,
+  WebsocketModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
