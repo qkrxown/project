@@ -11,14 +11,14 @@ export class User {
 
     @Column()
     @Field(()=>String)
-    name: string;
+    email: string;
     
     @Column()
     @Field(()=>Int)
-    age: string;
+    age: number;
     
     @Column()
     @Field(()=>String)
-    phone: string;
+    password: string;
     
 }

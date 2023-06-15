@@ -1,6 +1,6 @@
 import { SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 //옵션 transports는 사용할 통신방법 명시된것 이외에 다 자름 , namespace: 채팅방 느낌으로 소속만 처리
-@WebSocketGateway(port,{옵션 transports:['websocket','polling']})
+// @WebSocketGateway(port,{옵션 transports:['websocket','polling']})
 export class WebsocketGateway {
   // 모든 메세지에 대한 처리
   @SubscribeMessage('message')

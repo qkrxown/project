@@ -12,7 +12,7 @@ type Mutation {
 }
 
 input UserDto {
-  name: String!
+  email: String!
   age: Int!
-  phone: String!
+  password: String!
 }
