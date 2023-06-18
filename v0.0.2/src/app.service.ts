@@ -16,7 +16,7 @@ export class AppService {
     private userRepository: Repository<User>,
     private accessTokenService: JwtService,
     private refreshTokenService: JwtService,
-    private moodRepository: Repository<Mood>,
+    // private moodRepository: Repository<Mood>,
     ){}
 
 

@@ -26,9 +26,9 @@ export class User{
     // @Field(()=>String,{nullable:true})
     refreshToken?: string;
     
-    @OneToMany(()=> Mood, mood => mood.userId)
-    moods: Mood[]
+    // @OneToMany(()=> Mood, mood => mood.userId)
+    // moods: Mood[]
 
-    @OneToMany(()=> Average, average => average.userId)
-    averages: Average[]
+    // @OneToMany(()=> Average, average => average.userId)
+    // averages: Average[]
 }

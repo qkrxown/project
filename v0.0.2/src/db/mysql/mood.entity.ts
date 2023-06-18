@@ -1,26 +1,37 @@
-import { Column , Entity, PrimaryGeneratedColumn, ManyToOne, OneToOne,OneToMany } from 'typeorm'
-import { ObjectType, Field, Int,InputType} from '@nestjs/graphql';
+import { Column , Entity, PrimaryGeneratedColumn,ManyToOne,OneToOne,OneToMany,PrimaryColumn } from 'typeorm'
 import { User } from './user.entity';
+import { Weather } from './weather.entity';
+import { Who } from './who.entity';
+import { What } from './what.entity';
 
 
 
 
-//userId date로 조회
-    @Entity()
-    export class Mood{
 
-        @Column()
-        date: Date;
+@Entity()
+export class Mood{
 
-        @OneToMany()
-        mood: number;
+    @PrimaryGeneratedColumn("increment")
+    id:number;
 
-        @Column()
-        who: number;
+    @ManyToOne(()=>User,user => user.userId,{onDelete: "CASCADE"})
+    userId: User;
+    
+    @Column()
+    date:Date
+    
+    @Column()
+    mood:number;
+    
+    @OneToOne(()=>Weather,weather => weather.weatherId,{onDelete: "CASCADE"})
+    weather:Weather
 
-        @Column()
-        what: number;
-        
-        @ManyToOne(()=>User, user => user.moods)
-        userId: User;
-    };
+    @OneToMany(()=>Who,who => who.whoId,{onDelete: "CASCADE"})
+    who:Who
+
+    @OneToMany(()=>What,what => what.whatId,{onDelete: "CASCADE"})
+    what:What
+
+}
+
+

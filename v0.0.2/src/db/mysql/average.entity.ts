@@ -1,4 +1,4 @@
-import { Column , Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm'
+import { Column , Entity, PrimaryGeneratedColumn, ManyToOne,PrimaryColumn } from 'typeorm'
 import { User } from './user.entity';
 
 
@@ -37,6 +37,10 @@ import { User } from './user.entity';
         @Column()
         weekAvg: Number;
 
-        @ManyToOne(()=>User, user=>user.averages)
+        @ManyToOne(()=>User, user=>user.userId,{onDelete:"CASCADE"})
         userId: User;
+ 
+        @PrimaryGeneratedColumn("increment")
+        id:number;
     }
+
