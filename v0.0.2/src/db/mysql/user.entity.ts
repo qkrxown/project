@@ -1,24 +1,29 @@
 import { Column , Entity, PrimaryGeneratedColumn } from 'typeorm'
 import { ObjectType, Field, Int,InputType} from '@nestjs/graphql';
 
+
 @Entity()
 @ObjectType()
 @InputType()
-export class User {
+export class User{
     @PrimaryGeneratedColumn('increment')
-    @Field(()=>Int)
-    number:number;
+    // @Field(()=>Int)
+    userId:number;
 
     @Column()
-    @Field(()=>String)
+    // @Field(()=>String)
     email: string;
     
     @Column()
-    @Field(()=>Int)
+    // @Field(()=>Int)
     age: number;
     
     @Column()
-    @Field(()=>String)
+    // @Field(()=>String)
     password: string;
+    
+    @Column({default:null})
+    // @Field(()=>String,{nullable:true})
+    refreshToken?: string;
     
 }

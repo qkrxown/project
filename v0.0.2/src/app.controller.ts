@@ -17,9 +17,30 @@ export class AppController {
   }
 
   @Post("/login")
-  loginUser(@Body() userDto:UserDto): Promise<string>{
+  loginUser(@Body() userDto:UserDto): Promise<object>{
     try {
       return this.appService.loginUser(userDto);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Invalid user data'); // 오류 응답을 반환하거나 원하는 방식으로 처리
+    }
+
+  }
+  @Post("/pass")
+  login(@Body() body): Promise<object>{
+    try {
+      return this.appService.pass(body);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Invalid user data'); // 오류 응답을 반환하거나 원하는 방식으로 처리
+    }
+
+  }
+
+  @Post("/mood")
+  mood(@Body() body): Promise<object>{
+    try {
+      return this.appService.inputMood(body);
     } catch (error) {
       console.log(error);
       throw new BadRequestException('Invalid user data'); // 오류 응답을 반환하거나 원하는 방식으로 처리

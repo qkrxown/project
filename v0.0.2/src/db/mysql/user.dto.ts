@@ -4,17 +4,18 @@ import { IsEmail, IsInt, MinLength } from 'class-validator';
 
 @InputType()
 export class UserDto {
+    
     @IsEmail()
-    @Field(()=>String)
+    // @Field(()=>String)
     email: string;
     
     @IsInt()
-    @Field(()=>Int)
+    // @Field(()=>Int)
     @Type(()=>Number)
     age: number;
     
     @MinLength(8)
-    @Field(()=>String)
+    // @Field(()=>String)
     password: string;
     
 }

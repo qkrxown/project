@@ -10,7 +10,7 @@ import { User } from './mysql/user.entity';
             port: 5000,
             username: 'root',
             password: 'inno99059905',
-            database: 'nestjstest',
+            database: 'project',
             entities: [User],
             //테스트시 사용 옵션
             synchronize:true, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성
