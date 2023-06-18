@@ -1,40 +1,26 @@
-import { Column , Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column , Entity, PrimaryGeneratedColumn, ManyToOne, OneToOne,OneToMany } from 'typeorm'
 import { ObjectType, Field, Int,InputType} from '@nestjs/graphql';
+import { User } from './user.entity';
 
 
 
 
+//userId date로 조회
+    @Entity()
+    export class Mood{
 
-function dynamic(prefix){
-
-    @Entity({name:prefix})
-    @ObjectType()
-    @InputType()
-    class Mood{
-        @PrimaryGeneratedColumn('increment')
-        @Field(()=>Int)
-        number:number;
-        
         @Column()
-        @Field(()=>String)
-        email: string;
-    
-        @Column()
-        @Field(()=>Int)
-        age: number;
-        
-        @Column()
-        @Field(()=>String)
-        password: string;
-        
-        @Column({default:null})
-        @Field(()=>String,{nullable:true})
-        refreshToken?: string;
-        
-    }
-    return Mood;
-}
+        date: Date;
 
-export {
-    dynamic
-};
+        @OneToMany()
+        mood: number;
+
+        @Column()
+        who: number;
+
+        @Column()
+        what: number;
+        
+        @ManyToOne(()=>User, user => user.moods)
+        userId: User;
+    };

@@ -1,10 +1,10 @@
-import { Column , Entity, PrimaryGeneratedColumn } from 'typeorm'
-import { ObjectType, Field, Int,InputType} from '@nestjs/graphql';
+import { Column , Entity, PrimaryGeneratedColumn , OneToMany } from 'typeorm'
+import { Mood } from './mood.entity';
+import { Average } from './average.entity';
+
 
 
 @Entity()
-@ObjectType()
-@InputType()
 export class User{
     @PrimaryGeneratedColumn('increment')
     // @Field(()=>Int)
@@ -26,4 +26,9 @@ export class User{
     // @Field(()=>String,{nullable:true})
     refreshToken?: string;
     
+    @OneToMany(()=> Mood, mood => mood.userId)
+    moods: Mood[]
+
+    @OneToMany(()=> Average, average => average.userId)
+    averages: Average[]
 }
