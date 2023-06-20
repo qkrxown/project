@@ -1,4 +1,4 @@
-import { Column , Entity, PrimaryGeneratedColumn , OneToMany } from 'typeorm'
+import { Column , Entity, PrimaryGeneratedColumn , OneToMany,Unique } from 'typeorm'
 import { Mood } from './mood.entity';
 import { Average } from './average.entity';
 
@@ -11,6 +11,7 @@ export class User{
     userId:number;
 
     @Column()
+    @Unique(['email'])
     // @Field(()=>String)
     email: string;
     
@@ -22,9 +23,6 @@ export class User{
     // @Field(()=>String)
     password: string;
     
-    @Column({default:null})
-    // @Field(()=>String,{nullable:true})
-    refreshToken?: string;
     
     // @OneToMany(()=> Mood, mood => mood.userId)
     // moods: Mood[]

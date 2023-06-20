@@ -8,6 +8,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './db/mysql/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { UserModule } from './user/user.module';
+import { MoodModule } from './mood/mood.module';
 
 
 @Module({
@@ -16,6 +18,8 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule.register({}),
   DbModule,
   AuthModule,
+  UserModule,
+  MoodModule,
   // WebsocketModule,
   ],
   controllers: [AppController],
