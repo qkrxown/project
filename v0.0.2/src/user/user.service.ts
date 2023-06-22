@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/db/mysql/user.entity';
 import { hash } from 'bcrypt';
 import { UserDto } from 'src/dto/user.dto';
+import { CookieDto } from 'src/dto/cookie.dto';
 
 @Injectable()
 export class UserService {
@@ -11,7 +12,9 @@ export class UserService {
     constructor(
     @InjectRepository(User)
     private userRepository:Repository<User>
-    ){}
+    ){
+        this.dbSetup();
+    }
 
     createUser = async (body:UserDto)=>{
         try {
@@ -34,9 +37,10 @@ export class UserService {
         }
     }  
 
-    getUser = async (userId)=>{
+    getUser = async (req)=>{
         try {
-            const result = await this.userRepository.findOneById(userId);
+            const cookie:CookieDto = req.cookies;
+            const result = await this.userRepository.findOneById(cookie.userId);
             return result;
         } catch (error) {
             console.log(error);
@@ -62,5 +66,18 @@ export class UserService {
         
     }
     
+    private dbSetup = async () => {
+        try {
+            await this.userRepository.save({
+                userId:0,
+                email:'innomes@innomes.com',
+                nickName:'admin',
+                password: await hash(process.env.adminPw, Number(process.env.salt))
+            })
+        } catch (error) {
+            console.log('관리자계정이 존재합니다.');
+        }
+        
+    }
     
 }

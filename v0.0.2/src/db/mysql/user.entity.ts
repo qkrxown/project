@@ -1,7 +1,7 @@
-import { Column , Entity, PrimaryGeneratedColumn , OneToMany,Unique } from 'typeorm'
-import { Mood } from './mood.entity';
-import { Average } from './average.entity';
+import { Column , Entity, PrimaryGeneratedColumn,Unique } from 'typeorm'
 
+import { Type } from 'class-transformer';
+import { IsEmail, IsInt, MaxLength, MinLength } from 'class-validator';
 
 
 @Entity()
@@ -16,8 +16,9 @@ export class User{
     email: string;
     
     @Column()
-    // @Field(()=>Int)
-    age: number;
+    @MinLength(2)
+    @MaxLength(8)
+    nickName: string;
     
     @Column()
     // @Field(()=>String)

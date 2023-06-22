@@ -1,9 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from 'src/dto/user.dto';
 import { User } from 'src/db/mysql/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { request } from 'express';
+import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
@@ -31,11 +31,10 @@ export class UserController {
     }
     
     @UseGuards(AuthGuard)
-    @Get('/:userId')
-    getUser(@Param('userId') userId:number){
+    @Get('/userId')
+    getUser(@Req() req:Request){
         try {
-            console.log(userId);
-            return this.userService.getUser(userId);
+            return this.userService.getUser(req);
         } catch (error) {
             return error;
         }
@@ -52,9 +51,10 @@ export class UserController {
     }
     
     @UseGuards(AuthGuard)
-    @Delete('/:userId')
+    @Delete('/userId')
     deleteUser(@Param('userId') userId:number){
         try {
+            //회원탈퇴 유저 비밀번호 및 인증한 후 삭제가능
             return this.userService.deleteUser(userId);
         } catch (error) {
             return error;

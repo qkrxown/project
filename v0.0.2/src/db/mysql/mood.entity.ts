@@ -1,8 +1,8 @@
-import { Column , Entity, PrimaryGeneratedColumn,ManyToOne,OneToOne,OneToMany,PrimaryColumn } from 'typeorm'
-import { User } from './user.entity';
+import { Column , Entity, OneToOne,OneToMany,PrimaryColumn } from 'typeorm'
 import { Weather } from './weather.entity';
 import { Who } from './who.entity';
 import { What } from './what.entity';
+import { Type } from 'class-transformer';
 
 
 
@@ -11,27 +11,26 @@ import { What } from './what.entity';
 @Entity()
 export class Mood{
 
-    @PrimaryGeneratedColumn("increment")
-    id:number;
-
-    @ManyToOne(()=>User,user => user.userId,{onDelete: "CASCADE"})
-    userId: User;
+    @PrimaryColumn()
+    @Type(()=>Number)
+    userId?: number;
     
-    @Column()
-    date:Date
+    @PrimaryColumn({type:'date'})
+    date:string;
     
     @Column()
     mood:number;
     
-    @OneToOne(()=>Weather,weather => weather.weatherId,{onDelete: "CASCADE"})
-    weather:Weather
-
-    @OneToMany(()=>Who,who => who.whoId,{onDelete: "CASCADE"})
-    who:Who
-
-    @OneToMany(()=>What,what => what.whatId,{onDelete: "CASCADE"})
-    what:What
-
+    // @OneToOne(()=>Weather, weather => weather.weatherId)
+    @OneToMany(()=>Weather, weather => weather.mood)
+    weather:Weather[]
+    
+    @OneToMany(()=>Who, who => who.mood)
+    who:Who[]
+    
+    @OneToMany(()=>What, what => what.mood)
+    what:What[]
 }
+
 
 

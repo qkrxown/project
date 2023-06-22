@@ -38,7 +38,9 @@ export class AuthGuard implements CanActivate {
         }
         const newAccessToken = await this.generateAccessTokenFromRefreshToken({userId:userId},refreshToken);
         if (newAccessToken) {
-          response.cookie('accessToken',newAccessToken);
+          response.cookie('accessToken',newAccessToken,{
+            httpOnly : true
+          });
           return true;
         }
         throw new UnauthorizedException();
