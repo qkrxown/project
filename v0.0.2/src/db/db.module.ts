@@ -6,7 +6,8 @@ import { Weather } from './mysql/weather.entity';
 import { What } from './mysql/what.entity';
 import { Relationship } from './mysql/relationship.entity';
 import { Mood } from './mysql/mood.entity';
-import { Average } from './mysql/average.entity';
+import { Daily } from './mysql/daily.entity';
+import { Weekly } from './mysql/weekly.entity';
 
 @Module({
     imports:[
@@ -17,10 +18,10 @@ import { Average } from './mysql/average.entity';
             username: 'root',
             password: 'inno99059905',
             database: 'project',
-            entities: [User,Who,Weather,What,Relationship,Mood,Average],
+            entities: [User,Who,Weather,What,Relationship,Mood,Daily,Weekly],
             //테스트시 사용 옵션
             synchronize:true, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성
-            logging: true, // query log 보여줌 난 좋은것 같음 
+            logging: false, // query log 보여줌 난 좋은것 같음 
             dropSchema:false // 서버끄면 스키마 테이블 삭제해줌
         }),
 

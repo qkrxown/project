@@ -1,4 +1,4 @@
-import { Column , Entity,Unique, PrimaryGeneratedColumn , ManyToOne } from 'typeorm'
+import { Column , Entity,Unique, PrimaryGeneratedColumn , ManyToMany } from 'typeorm'
 import { Mood } from './mood.entity';
 
 
@@ -12,6 +12,4 @@ export class What{
     @Unique(['name'])
     name: string;
  
-    @ManyToOne(()=>Mood, mood => mood.what)
-    mood:Mood;
 }

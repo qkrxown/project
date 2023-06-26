@@ -1,4 +1,4 @@
-import { Column , Entity, OneToOne,OneToMany,PrimaryColumn } from 'typeorm'
+import { Column , Entity, ManyToMany,PrimaryColumn,JoinTable } from 'typeorm'
 import { Weather } from './weather.entity';
 import { Who } from './who.entity';
 import { What } from './what.entity';
@@ -13,22 +13,25 @@ export class Mood{
 
     @PrimaryColumn()
     @Type(()=>Number)
-    userId?: number;
+    userId: number;
     
     @PrimaryColumn({type:'date'})
     date:string;
     
-    @Column()
+    @Column({nullable:true})
     mood:number;
     
     // @OneToOne(()=>Weather, weather => weather.weatherId)
-    @OneToMany(()=>Weather, weather => weather.mood)
+    @ManyToMany(()=>Weather,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+    @JoinTable()
     weather:Weather[]
     
-    @OneToMany(()=>Who, who => who.mood)
+    @ManyToMany(()=>Who,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+    @JoinTable()
     who:Who[]
     
-    @OneToMany(()=>What, what => what.mood)
+    @ManyToMany(()=>What,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+    @JoinTable()
     what:What[]
 }
 

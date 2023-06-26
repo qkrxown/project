@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Post, Put, Req } from '@nestjs/common';
+import { Controller, Delete, Get, HttpException, HttpStatus, Post, Put, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { CookieDto } from 'src/dto/cookie.dto';
 import { MoodService } from './mood.service';
@@ -10,62 +10,72 @@ export class MoodController {
         private moodService:MoodService
     ){}
     @Post()
-    insertMood(@Req() req:Request){
+    async insertMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
         const body:MoodDto = req.body;
         try {
-            return this.moodService.saveMood(cookie,body);
+            const savedMood = await this.moodService.saveMood(cookie,body);
+            const savedDailyMood = await this.moodService.updateDailyMood(savedMood);
+            const savedDailyMoodAvg = await this.moodService.updateDailyMoodAvg(savedMood);
+            const savedAllDailyMood = await this.moodService.updateAllDailyMood(savedMood);
+            const savedAllDailyMoodAvg = await this.moodService.updateAllDailyMoodAvg(savedMood);
+            const savedWeeklyMood = await this.moodService.updateWeeklyMood(savedMood);
+            const savedWeeklyMoodAvg = await this.moodService.updateWeeklyMoodAvg(savedMood);
+            const savedAllWeeklyMood = await this.moodService.updateAllWeeklyMood(savedMood);
+            const savedAllWeeklyMoodAvg = await this.moodService.updateAllWeeklyMoodAvg(savedMood);
+            return "등록되었습니다.";
         } catch (error) {
-            console.log(error);
+            throw new HttpException(error,HttpStatus.BAD_REQUEST);
         }
-        //기분, 날씨, 행동, 사람 DTO 검증 
-        //db에 저장
-        //전체 통계 업데이트
-            // 없다면 생성 있다면 불러서 수정
-            //요일별 column저장 
-            //주평균 column저장 없는거 default 0
-            //관계 column 저장
-
     }
 
     @Get()
     getMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
-        return this.moodService.getMood();
+        return this.moodService.getMood(cookie,req.body);
     }
 
-    @Get()
-    getWeekMood(@Req() req:Request){
+    @Get('/daily')
+    getDailyMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
+        return this.moodService.getDailyMood(cookie,req.body);
+        // 월화수목금, 주평균 가져오기 
+    }
+    
+    @Get('/weekly')
+    getWeeklyMood(@Req() req:Request){
+        const cookie:CookieDto = req.cookies;
+        return this.moodService.getWeeklyMood(cookie,req.body);
         // 월화수목금, 주평균 가져오기 
     }
 
-    @Put()
-    replaceMood(@Req() req:Request){
-        const cookie:CookieDto = req.cookies;
-        // 기분, 날씨, 행동, 사람 DTO 검증
-        //db에 저장
-        //전체 통계 업데이트
-            //요일별 column저장 기존값 삭제
-            //주평균 column저장 재평균
-            //관계 column저장 기존값 - 현재값 +
-    }
-
     @Delete()
-    deleteMood(@Req() req:Request){
+    async deleteMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
-        // userId, date 기분 삭제
-        
-        // 기분, 날씨, 행동, 사람 DTO 검증
-        //db에 저장
-        //전체 통계 업데이트
-            //요일별 column저장 기존값 삭제
-            //주평균 column저장 재평균
-            //관계 column저장 기존값 - 현재값 +
+        const body:MoodDto = req.body;
+        try {
+            const savedMood = await this.moodService.deleteMood(cookie,body);
+            const savedDailyMood = await this.moodService.updateDailyMood(savedMood);
+            const savedDailyMoodAvg = await this.moodService.updateDailyMoodAvg(savedMood);
+            const savedAllDailyMood = await this.moodService.updateAllDailyMood(savedMood);
+            const savedAllDailyMoodAvg = await this.moodService.updateAllDailyMoodAvg(savedMood);
+            const savedWeeklyMood = await this.moodService.updateWeeklyMood(savedMood);
+            const savedWeeklyMoodAvg = await this.moodService.updateWeeklyMoodAvg(savedMood);
+            const savedAllWeeklyMood = await this.moodService.updateAllWeeklyMood(savedMood);
+            const savedAllWeeklyMoodAvg = await this.moodService.updateAllWeeklyMoodAvg(savedMood);
+            return "삭제되었습니다.";
+        } catch (error) {
+            throw new HttpException(error,HttpStatus.BAD_REQUEST); 
+        }
     }
+
+//========== 전체 유저 ===============
+
+    @Get('/daily/all')
+    getAllDailyMood(@Req() req:Request){
+        const cookie = req.cookies;
+        cookie.userId = 0;
+        return this.moodService.getDailyMood(cookie,req.body);
+    }
+
 }
-
-
-// 날씨, 행동, 사람
-
-// 달력식
