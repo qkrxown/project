@@ -8,13 +8,27 @@ import { What } from 'src/db/mysql/what.entity';
 import { Who } from 'src/db/mysql/who.entity';
 import {Daily} from 'src/db/mysql/daily.entity';
 import { Weekly } from 'src/db/mysql/weekly.entity';
+import { Util } from 'src/util/util';
+import { WeatherMoodRelation } from 'src/db/mysql/relationWeather.entity';
+import { WhatMoodRelation } from 'src/db/mysql/relationWhat.entity';
+import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
 
 
 @Module({
   imports:[
-    TypeOrmModule.forFeature([Mood,Weather,What,Who,Daily,Weekly]),
+    TypeOrmModule.forFeature([
+      Mood,
+      Weather,
+      What,
+      Who,
+      Daily,
+      Weekly,
+      WeatherMoodRelation,
+      WhatMoodRelation,
+      WhoMoodRelation
+    ]),
   ],
   controllers: [MoodController],
-  providers: [MoodService]
+  providers: [MoodService,Util]
 })
 export class MoodModule {}

@@ -4,7 +4,6 @@ import { User } from './mysql/user.entity';
 import { Who } from './mysql/who.entity';
 import { Weather } from './mysql/weather.entity';
 import { What } from './mysql/what.entity';
-import { Relationship } from './mysql/relationship.entity';
 import { Mood } from './mysql/mood.entity';
 import { Daily } from './mysql/daily.entity';
 import { Weekly } from './mysql/weekly.entity';
@@ -18,7 +17,7 @@ import { Weekly } from './mysql/weekly.entity';
             username: 'root',
             password: 'inno99059905',
             database: 'project',
-            entities: [User,Who,Weather,What,Relationship,Mood,Daily,Weekly],
+            entities: [User,Who,Weather,What,Mood,Daily,Weekly],
             //테스트시 사용 옵션
             synchronize:true, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성
             logging: false, // query log 보여줌 난 좋은것 같음 

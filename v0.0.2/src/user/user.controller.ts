@@ -4,6 +4,9 @@ import { UserDto } from 'src/dto/user.dto';
 import { User } from 'src/db/mysql/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Request } from 'express';
+import { TypedParam, TypedRoute } from '@nestia/core';
+import { CookieDto } from 'src/dto/cookie.dto';
+import typia from 'typia';
 
 @Controller('user')
 export class UserController {
@@ -11,7 +14,7 @@ export class UserController {
 
     //요청사항 email형식 , pw길이제한
     // @UseGuards(AuthGuard)
-    @Post()
+    @TypedRoute.Post()
     createUser(@Body() body:UserDto){
         try {
             return this.userService.createUser(body);
@@ -20,7 +23,7 @@ export class UserController {
         }
     }
     @UseGuards(AuthGuard)
-    @Get()
+    @TypedRoute.Get('/all')
     getUserList(){
         try {
             // console.log(request);
@@ -31,30 +34,37 @@ export class UserController {
     }
     
     @UseGuards(AuthGuard)
-    @Get('/userId')
+    @TypedRoute.Get()
     getUser(@Req() req:Request){
         try {
-            return this.userService.getUser(req);
+            const cookie:CookieDto = req.cookies
+            const {userId} = cookie;
+            return this.userService.getUser(userId);
         } catch (error) {
             return error;
         }
     }
     
     @UseGuards(AuthGuard)
-    @Put()
-    updateUser(@Body() body:User){
+    @TypedRoute.Put()
+    updateUser(@Req() req:Request){
         try {
-            return this.userService.updateUser(body);
+            const cookie:CookieDto = req.cookies
+            const body:UserDto = req.body;
+            const {userId} = cookie;
+            
+            return this.userService.updateUser(userId,body);
         } catch (error) {
             return error;
         }
     }
     
     @UseGuards(AuthGuard)
-    @Delete('/userId')
-    deleteUser(@Param('userId') userId:number){
+    @TypedRoute.Delete()
+    deleteUser(@Req() req:Request){
         try {
-            //회원탈퇴 유저 비밀번호 및 인증한 후 삭제가능
+            const cookie:CookieDto = req.cookies
+            const {userId} = cookie;
             return this.userService.deleteUser(userId);
         } catch (error) {
             return error;

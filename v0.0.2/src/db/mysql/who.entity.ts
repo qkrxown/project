@@ -5,7 +5,6 @@ import { Mood } from './mood.entity';
 @Entity()
 export class Who{
     @PrimaryGeneratedColumn('increment')
-    // @Field(()=>Int)
     whoId: number;
 
     @Column()

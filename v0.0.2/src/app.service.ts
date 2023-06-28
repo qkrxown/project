@@ -10,37 +10,6 @@ import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class AppService {
-  
-  constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    ){}
-
-
-    async createUser(body): Promise<string> {
-    try {
-      return '회원가입 완료';
-    } catch (error) {
-      return error
-    }
-  }
-
-  async loginUser(body): Promise<object> {
-    try {
-        return {a:"a"};
-    } catch (error) {
-      return error
-    }
-  }
-
-  async pass(body): Promise<object> {
-    try {
-    return {a:"a"};
-    }catch(error){
-      console.log(error);
-    }
-  }
-
 
 }
 

@@ -2,6 +2,9 @@ import { Controller, Post, Body, HttpException, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { Response } from 'express';
+import { TypedBody, TypedRoute } from '@nestia/core';
+import { LoginDto } from 'src/dto/login.dto';
+import typia from 'typia';
 
 @Controller('auth')
 export class AuthController {
@@ -10,12 +13,13 @@ export class AuthController {
     private userService: UserService,
   ) {}
 
-  @Post()
+  @TypedRoute.Post()
   async login(
-    @Body() body: { email: string; password: string; autoLogin?: boolean},
+    @TypedBody() body: LoginDto,
     @Res() res: Response,
   ): Promise<string> {
     try {
+      typia.assert<LoginDto>(body);
       const login = await this.authService.login(body);
       const accessToken = await this.authService.generateAccessToken(login);
       const refreshToken = await this.authService.generateRefreshToken(login);

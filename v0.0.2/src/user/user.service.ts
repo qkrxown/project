@@ -30,26 +30,31 @@ export class UserService {
 
     getUserList = async ()=>{
         try {
-            const result = await this.userRepository.find({select:['email']});
+            const result = await this.userRepository.find();
             return result;
         } catch (error) {
             console.log(error);
         }
     }  
 
-    getUser = async (req)=>{
+    getUser = async (userId:number)=>{
         try {
-            const cookie:CookieDto = req.cookies;
-            const result = await this.userRepository.findOneById(cookie.userId);
+            const result = await this.userRepository.findOne({
+                where:{
+                    userId:userId
+                }
+            });
             return result;
         } catch (error) {
             console.log(error);
         }
     }  
 
-    updateUser = async (user : User)=>{
+    updateUser = async (userId:number,user:UserDto)=>{
         try {
-            const result = await this.userRepository.update({userId:user.userId},user);
+            const result = await this.userRepository.update({
+                userId:userId
+                },user);
             return result;
         } catch (error) {
             console.log(error);
@@ -72,7 +77,7 @@ export class UserService {
                 userId:0,
                 email:'innomes@innomes.com',
                 nickName:'admin',
-                password: await hash(process.env.adminPw, Number(process.env.salt))
+                password: await hash(<string>process.env.adminPw, Number(process.env.salt))
             })
         } catch (error) {
             console.log('관리자계정이 존재합니다.');

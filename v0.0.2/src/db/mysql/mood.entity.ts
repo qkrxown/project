@@ -2,7 +2,6 @@ import { Column , Entity, ManyToMany,PrimaryColumn,JoinTable } from 'typeorm'
 import { Weather } from './weather.entity';
 import { Who } from './who.entity';
 import { What } from './what.entity';
-import { Type } from 'class-transformer';
 
 
 
@@ -12,7 +11,6 @@ import { Type } from 'class-transformer';
 export class Mood{
 
     @PrimaryColumn()
-    @Type(()=>Number)
     userId: number;
     
     @PrimaryColumn({type:'date'})

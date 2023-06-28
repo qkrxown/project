@@ -1,81 +1,99 @@
-import { Controller, Delete, Get, HttpException, HttpStatus, Post, Put, Req } from '@nestjs/common';
+import { Controller, HttpException, HttpStatus, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { CookieDto } from 'src/dto/cookie.dto';
 import { MoodService } from './mood.service';
 import { MoodDto } from 'src/dto/mood.dto';
+import { TypedRoute,TypedParam } from '@nestia/core';
+import typia from 'typia';
 
 @Controller('mood')
 export class MoodController {
     constructor(
         private moodService:MoodService
     ){}
-    @Post()
+    @TypedRoute.Post()
     async insertMood(@Req() req:Request){
+        try {
         const cookie:CookieDto = req.cookies;
         const body:MoodDto = req.body;
-        try {
-            const savedMood = await this.moodService.saveMood(cookie,body);
-            const savedDailyMood = await this.moodService.updateDailyMood(savedMood);
-            const savedDailyMoodAvg = await this.moodService.updateDailyMoodAvg(savedMood);
-            const savedAllDailyMood = await this.moodService.updateAllDailyMood(savedMood);
-            const savedAllDailyMoodAvg = await this.moodService.updateAllDailyMoodAvg(savedMood);
-            const savedWeeklyMood = await this.moodService.updateWeeklyMood(savedMood);
-            const savedWeeklyMoodAvg = await this.moodService.updateWeeklyMoodAvg(savedMood);
-            const savedAllWeeklyMood = await this.moodService.updateAllWeeklyMood(savedMood);
-            const savedAllWeeklyMoodAvg = await this.moodService.updateAllWeeklyMoodAvg(savedMood);
+        const {userId} = cookie;
+        const {date,mood,weather,who,what} = body;
+            const savedMood = await this.moodService.saveMood(userId,date,mood,weather,who,what);
             return "등록되었습니다.";
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST);
         }
     }
-
-    @Get()
-    getMood(@Req() req:Request){
-        const cookie:CookieDto = req.cookies;
-        return this.moodService.getMood(cookie,req.body);
+    @TypedRoute.Get('/daily/all/:date')
+    getAllDailyMood(@Req() req:Request){
+        try{
+            const {date} = req.params;
+            return this.moodService.getDailyMood(0,date);
+        }catch (error){
+            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+        }
     }
 
-    @Get('/daily')
+    @TypedRoute.Get('/weekly/all/:date')
+    getAllWeeklyMood(@Req() req:Request){
+        const {date} = req.params;
+        return this.moodService.getWeeklyMood(0,date);
+    }
+
+    @TypedRoute.Get('/daily/:date')
     getDailyMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
-        return this.moodService.getDailyMood(cookie,req.body);
+        const {userId} = cookie;
+        const {date} = req.params;
+        return this.moodService.getDailyMood(userId,date);
         // 월화수목금, 주평균 가져오기 
     }
     
-    @Get('/weekly')
+    @TypedRoute.Get('/weekly/:date')
     getWeeklyMood(@Req() req:Request){
         const cookie:CookieDto = req.cookies;
-        return this.moodService.getWeeklyMood(cookie,req.body);
+        const {userId} = cookie;
+        const {date} = req.params;
+        return this.moodService.getWeeklyMood(userId,date);
         // 월화수목금, 주평균 가져오기 
     }
 
-    @Delete()
-    async deleteMood(@Req() req:Request){
-        const cookie:CookieDto = req.cookies;
-        const body:MoodDto = req.body;
+    
+    @TypedRoute.Get('/:date')
+    getMood(@Req() req:Request){
         try {
-            const savedMood = await this.moodService.deleteMood(cookie,body);
-            const savedDailyMood = await this.moodService.updateDailyMood(savedMood);
-            const savedDailyMoodAvg = await this.moodService.updateDailyMoodAvg(savedMood);
-            const savedAllDailyMood = await this.moodService.updateAllDailyMood(savedMood);
-            const savedAllDailyMoodAvg = await this.moodService.updateAllDailyMoodAvg(savedMood);
-            const savedWeeklyMood = await this.moodService.updateWeeklyMood(savedMood);
-            const savedWeeklyMoodAvg = await this.moodService.updateWeeklyMoodAvg(savedMood);
-            const savedAllWeeklyMood = await this.moodService.updateAllWeeklyMood(savedMood);
-            const savedAllWeeklyMoodAvg = await this.moodService.updateAllWeeklyMoodAvg(savedMood);
+            const cookie:CookieDto = req.cookies;
+            const body:MoodDto = req.body;
+            const {userId} = cookie;
+            const {date} = body;
+            console.log(date);
+            return this.moodService.getMood(userId,date);
+        } catch (error) {
+            console.log(error);
+            return error;
+        }
+    }
+
+    @TypedRoute.Delete()
+    async deleteMood(@Req() req:Request){
+        try {
+            const cookie:CookieDto = req.cookies;
+            const body:MoodDto = req.body;
+            const {userId} = cookie;
+            const {date,mood} = body;
+            const savedMood = await this.moodService.deleteMood(userId,date);
             return "삭제되었습니다.";
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST); 
         }
     }
+    //========== 전체 유저 ===============
 
-//========== 전체 유저 ===============
-
-    @Get('/daily/all')
-    getAllDailyMood(@Req() req:Request){
-        const cookie = req.cookies;
-        cookie.userId = 0;
-        return this.moodService.getDailyMood(cookie,req.body);
+    @TypedRoute.Get('/relation')
+    getRelationMood(@Req() req:Request){
+        const cookie = req.cookies;   
+        return this.moodService.getRelationMood(req.body);
     }
+
 
 }

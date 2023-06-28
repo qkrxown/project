@@ -1,18 +1,24 @@
-import { Type } from 'class-transformer';
-import { IsEmail, IsInt, MaxLength, MinLength } from 'class-validator';
 
-export class UserDto {
+
+export interface UserDto {
     
-    @IsEmail()
-    // @Field(()=>String)
+    /**
+     * @format email
+     */
     email: string;
     
-    @MinLength(2)
-    @MaxLength(8)
+    /**
+     * @pattern ^[a-zA-Z0-9가-힣_]+$
+     * @minLength 2
+     * @maxLength 8
+     */
     nickName: string;
     
-    @MinLength(8)
-    // @Field(()=>String)
+    /**
+     * @pattern ^(?=.*[a-z])(?=.*[0-9])[a-zA-Z0-9!@#$%^&*_-]+$
+     * @minLength 8
+     * @maxLength 16
+     */
     password: string;
     
 }

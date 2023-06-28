@@ -1,11 +1,6 @@
 
-import { Type } from 'class-transformer';
-import { IsEmail, IsInt, MinLength } from 'class-validator';
+export interface CookieDto{
 
-
-
-export class CookieDto{
-    @Type(()=>Number)
     userId: number;
 
     accessToken: string;

@@ -14,8 +14,6 @@ import { MoodModule } from './mood/mood.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
-    JwtModule.register({}),
   DbModule,
   AuthModule,
   UserModule,
