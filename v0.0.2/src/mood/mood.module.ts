@@ -12,6 +12,11 @@ import { Util } from 'src/util/util';
 import { WeatherMoodRelation } from 'src/db/mysql/relationWeather.entity';
 import { WhatMoodRelation } from 'src/db/mysql/relationWhat.entity';
 import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthService } from 'src/auth/auth.service';
+import { AuthModule } from 'src/auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { User } from 'src/db/mysql/user.entity';
 
 
 @Module({
@@ -27,8 +32,10 @@ import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
       WhatMoodRelation,
       WhoMoodRelation
     ]),
+    TypeOrmModule.forFeature([User]),
+    JwtModule.register({})
   ],
   controllers: [MoodController],
-  providers: [MoodService,Util]
+  providers: [MoodService,Util,AuthGuard,AuthService]
 })
 export class MoodModule {}

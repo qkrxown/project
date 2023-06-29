@@ -15,9 +15,8 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
-    const token = request.cookie.accessToken;
-    const userId = request.cookie.userId;
-    // console.log(token);
+    const token = request.cookies.accessToken;
+    const userId = request.cookies.userId;
     if(!token){
       throw new UnauthorizedException();
     }
@@ -31,8 +30,7 @@ export class AuthGuard implements CanActivate {
       
       if (error.name === 'TokenExpiredError') {
         const userId = request.cookies.userId;
-        console.log(userId);
-        const refreshToken = request.cookies.refreshtoken;
+        const refreshToken = request.cookies.refreshToken;
         if(!userId||!refreshToken){
           throw new UnauthorizedException();
         }

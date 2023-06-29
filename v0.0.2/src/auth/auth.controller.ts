@@ -15,7 +15,7 @@ export class AuthController {
 
   @TypedRoute.Post()
   async login(
-    @TypedBody() body: LoginDto,
+    @Body() body: LoginDto,
     @Res() res: Response,
   ): Promise<string> {
     try {

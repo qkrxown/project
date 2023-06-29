@@ -62,34 +62,42 @@ export class MoodService {
     ){
         this.dbSetup();
     }
-    
+    //체크 완
     getMood =async (userId:number,date:string) => {
+        try {
 
-        const mood = await this.moodRepository.findOne({
-           where:{userId:userId,date:date},
-           relations:{
-            weather:true,
-            who:true,
-            what:true
-            },
-           order: {date:'DESC'}
-          });
-        if(!mood){
-            throw new HttpException("기분을 등록해 보세요.",HttpStatus.BAD_REQUEST)
+            const mood = await this.moodRepository.findOne({
+                where:{userId:userId,date:date},
+                relations:{
+                    weather:true,
+                    who:true,
+                    what:true
+                    },
+                order: {date:'DESC'}
+            });
+            if(!mood){
+                throw new HttpException("기분을 등록해 보세요.",HttpStatus.BAD_REQUEST)
+            }
+            return mood;
+
+        } catch (error) {
+            return error;
         }
-        return mood;
-        
     }
-
+    //체크 완
     saveMood = async (userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
         
+        try {
         const weatherList:number[] = [...weather];
         const whoList:number[] = [...who];
         const whatList:number[] = [...what];
 
-        try {
+        await this.updateWeatherRelation(userId,mood,[...weather],true);
+        await this.updateWhatRelation(userId,mood,[...what],true);
+        await this.updateWhoRelation(userId,mood,[...who],true);
+
+
             const moodModel = new Mood();
-                // moodModel.date = moment(new Date()).format('YYYY-MM-DD');
                 moodModel.date = date;
                 moodModel.userId = userId;
                 moodModel.mood = mood;
@@ -98,30 +106,22 @@ export class MoodService {
                 moodModel.what = whatList.map(index => cachedWhat[index-1]);
             
                 const savedMood = await this.moodRepository.save(moodModel);
-                
+                if(!savedMood){
+                    throw new HttpException("Mood를 저장하지 못했습니다.",HttpStatus.BAD_REQUEST);
+                }
             return await this.updateDailyMood(userId,date,mood);
             
         } catch (error) {
-            console.log(error);
+            return error;
         }        
     }
-
+    //체크 완
     getDailyMood =async (userId:number,date:string) => {
-        const dateClass = new Date(date);
         
-        if(userId == 0){
-
-            const getAllMood = await this.dailyRepository.findOne({
-                where:{
-                    userId:userId,
-                    year:dateClass.getFullYear(),
-                    weekNum:moment(dateClass).week(),
-                }
-            })
-            return getAllMood;
-
-        }else{
-
+        try {
+            
+            const dateClass = new Date(date);
+            
             const getAvg = await this.dailyRepository.findOne({
                 where:{
                     year:dateClass.getFullYear(),
@@ -133,69 +133,84 @@ export class MoodService {
                 throw new HttpException('데이터가 없습니다. 기분을 등록해 보세요',HttpStatus.NOT_FOUND);
             }
             return getAvg;
+    
+        } catch (error) {
+            return error;
         }
-
     }
-
+    //체크 완
     getWeeklyMood =async (userId:number,date:string) => {
 
-        const dateClass = new Date(date);
-        
-        const getAvg = await this.weeklyRepository.findOne({
-            where:{
-                month:moment(dateClass).format("YYYY-MM"),
-                userId:userId
+        try {
+            
+            const dateClass = new Date(date);
+            const getAvg = await this.weeklyRepository.findOne({
+                where:{
+                    month:moment(dateClass).format("YYYY-MM"),
+                    userId:userId
+                }
+            })
+            if(!getAvg){
+                throw new HttpException('데이터가 없습니다. 기분을 등록해 보세요',HttpStatus.NOT_FOUND);
             }
-        })
-        if(!getAvg){
-            throw new HttpException('데이터가 없습니다. 기분을 등록해 보세요',HttpStatus.NOT_FOUND);
+            return getAvg;
+
+        } catch (error) {
+            return error;
         }
-        return getAvg;
-
     }
-
+    //체크 완
     deleteMood = async (userId:number,date:string) => {
         try {
+            const findMood = await this.moodRepository.findOne({
+                where:{
+                    userId:userId,
+                    date:date
+                },relations:{
+                    weather:true,
+                    what:true,
+                    who:true
+                }
+            })
+            if(!findMood){
+                throw new HttpException("삭제할 기분이 없습니다.",HttpStatus.BAD_REQUEST);
+            }
             const deleteMood = await this.moodRepository.delete({userId:userId,date:date});
-            
+            const {mood,weather,what,who} = findMood;
+            const weatherId = [...weather].map(x=>x.weatherId);
+            const whatId = [...what].map(x=>x.whatId);
+            const whoId = [...who].map(x=>x.whoId);
+
+            await this.updateWeatherRelation(userId,mood,weatherId,false);
+            await this.updateWhatRelation(userId,mood,whatId,false);
+            await this.updateWhoRelation(userId,mood,whoId,false);
+
             if(deleteMood.affected == 1){
                 return await this.updateDailyMood(userId,date,null);
             }else{
                 throw new HttpException("삭제하지 못했습니다.",HttpStatus.BAD_REQUEST);
             }
         } catch (error) {
-            console.log(error);
+            return error;
         }        
     }
 
-    getRelationMood =async (body) => {
-    
-        const {date} = body
-        try {
-            const countWeather = await this.moodRepository.count({
-                relations:{
-                    weather:true,
-                    what:true,
-                    who:true
-                },
-                where:{
-                    userId:1,
-                }
-            });
-            return console.log(countWeather);
-            
-            // if(deleteMood.affected == 1){
-                // return {userId:userId,date:date,mood:null};
-            // }else{
-                // }
-                // throw new HttpException("삭제하지 못했습니다.",HttpStatus.BAD_REQUEST);
-            } catch (error) {
-                console.log(error);
-                throw new HttpException(error,HttpStatus.BAD_REQUEST);
-        }
+    getRelation =async (userId:number) => {
+        const weatherRelation = await this.weatherMoodRelationRepository.find({
+            where:{userId:userId}
+        });
+        console.log(weatherRelation);
+        const whatRelation = await this.whatMoodRelationRepository.find({
+            where:{userId:userId}
+        });
+        const whoRelation = await this.whoMoodRelationRepository.find({
+            where:{userId:userId}
+        })
+
+        const result = [...weatherRelation,...whatRelation,...whoRelation];
+        return result;
     }
-
-
+    //체크 완
     private updateDailyMood =async (userId:number,date:string,mood:number|null) => {
 
         const dateClass = new Date(date);
@@ -220,31 +235,34 @@ export class MoodService {
                     ...obj
                 })
                 const saveAvg = await this.dailyRepository.save(daily);
-                return await this.updateDailyMoodAvg(userId,date); 
+                if(!saveAvg){
+                    throw new HttpException("Daily가 저장되지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                return await this.updateDailyMoodAvg(userId,date);
             }
 
 
         } catch (error) {
-            console.log(error);            
+            return error;
         }
         
 
     }
-
+    //체크 완
     private updateDailyMoodAvg = async (userId:number,date:string) => {
 
-        const dateClass = new Date(date);
         try {
+            const dateClass = new Date(date);
             
             const savedDailyMood = await this.dailyRepository.findOne({
                 where:{
                 userId:userId,
                 year:dateClass.getFullYear(),
                 weekNum:moment(dateClass).week()
-            }
-            })
+                }
+            });
             if(!savedDailyMood){
-                throw new HttpException("updateDailyMood가 정상동작 하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new HttpException("Daily가 없습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             const { sun, mon, tue, wed, thu, fri, sat } = savedDailyMood;
             const array = [sun,mon,tue,wed,thu,fri,sat];
@@ -256,6 +274,9 @@ export class MoodService {
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week()
                 })
+                if(updateDailyMoodAvg.affected == 0){
+                    throw new HttpException("Daily 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
                 return await this.updateAllDailyMood(userId,date);
             }else{
                 const updateDailyMoodAvg = await this.dailyRepository.update({
@@ -263,140 +284,64 @@ export class MoodService {
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week()
                 },{weekAvg: weekAvg});
-                
+                if(updateDailyMoodAvg.affected == 0){
+                    throw new HttpException("Daily Avg 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
                 return await this.updateAllDailyMood(userId,date);
             }
 
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            return error;
         }
     }
-    
-    private updateWeeklyMood =async (userId:number,date:string) => {
 
-        try{             
-            const dateClass = new Date(date);
-            const savedDailyMood = await this.dailyRepository.findOne({
-                where:{
-                userId:userId,
-                year:dateClass.getFullYear(),
-                weekNum:moment(dateClass).week()
-                }
-            })
-            // 데일리 찾음 없음?
-            const momentObj = moment().week(moment(dateClass).week());
-            const weekOfMonth = momentObj.week() - moment().startOf('month').week() + 1
-            
-            if(!savedDailyMood){
-                throw new HttpException("updateDailyMood가 정상동작하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);                                
-            }else{
-                const obj = {
-                    [`week${weekOfMonth}`]: savedDailyMood.weekAvg
-                }
-            
-            const updateWeeklyMood = await this.weeklyRepository.update({
-                userId:userId,
-                month:moment(dateClass).format('YYYY-MM'),
-            },obj);
-            
-            if(updateWeeklyMood.affected == 1){
-                return await this.updateAllWeeklyMoodAvg(userId,date);
-                
-            }else{
-                const weekly = await this.weeklyRepository.create({
-                    userId:0,
-                    month:moment(dateClass).format('YYYY-MM'),
-                    ...obj,
-                    monthAvg:savedDailyMood.weekAvg
-                })
-                const saveWeeklyMood = await this.weeklyRepository.save(weekly);
-                
-                return await this.updateWeeklyMoodAvg(userId,date);
-            }
-        }
-        } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
-        }
-        
-    }
-
-
-    private updateWeeklyMoodAvg =async (userId:number,date:string) => {
-        const dateClass = new Date(date);
-        try{             
-            const savedWeeklyMood = await this.weeklyRepository.findOne({
-                where:{
-                    userId:userId,
-                    month:moment(dateClass).format('YYYY-MM'),
-                }
-            })
-            if(!savedWeeklyMood){
-                throw new HttpException("updateWeeklyMood가 정상동작하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
-            }else{
-                const { week1,week2,week3,week4,week5 } = savedWeeklyMood;
-                const weeks = [week1,week2,week3,week4,week5 ]
-                const monthAvg = await this.util.average(weeks);
-
-                if(monthAvg == null){
-
-                    const updateWeeklyMoodAvg = await this.weeklyRepository.delete({
-                        userId:userId,
-                        month:moment(dateClass).format('YYYY-MM'),
-                    });
-                    return this.updateAllWeeklyMood(userId,date);
-                }else{
-    
-                    const updateWeeklyMoodAvg = await this.weeklyRepository.update({
-                        userId:userId,
-                        month:moment(dateClass).format('YYYY-MM'),
-                    },{monthAvg:monthAvg});
-                    return this.updateAllWeeklyMood(userId,date);
-                }
-            }
-        } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
-        }
-        
-    }
     //keyof Daily로 switch case문과  type|null 문제 해결되었음
     private updateAllDailyMood = async (userId: number, date: string) => {
         try {
-          const dateClass = new Date(date);
-          const year = dateClass.getFullYear();
-          const weekNum = moment(dateClass).week();
-      
-          const dayOfWeek = new Date(date).getDay();
-          const day = daysOfWeek[dayOfWeek];
-          const average = await this.dailyRepository.average(day as keyof Daily, { year, weekNum, userId: Not(0) });
-      
-          if (average === null) {
-            throw new HttpException("updateDailyMood가 정상작동 하지 않았습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
-          }
-      
-          const roundedAverage = Math.round(average);
-      
-          const updateData = { [day]: roundedAverage };
-          const updateCondition = { userId: 0, year, weekNum };
-      
-          const updateAllDailyMood = await this.dailyRepository.update(updateCondition, updateData);
-      
-          if (updateAllDailyMood.affected === 0) {
-            const model = new Daily();
-            model.userId = 0;
-            model.year = year;
-            model.weekNum = weekNum;
-            model[day] = roundedAverage;
-      
-            const saveAllDailyMood = await this.dailyRepository.save(model);
-            return await this.updateAllDailyMoodAvg(userId, date);
-          }
-      
-          return await this.updateAllDailyMoodAvg(userId, date);
-        } catch (error) {
-          throw new HttpException(error, HttpStatus.BAD_REQUEST);
+            const dateClass = new Date(date);
+            const year = dateClass.getFullYear();
+            const weekNum = moment(dateClass).week();
+
+            const dayOfWeek = new Date(date).getDay();
+            const day = daysOfWeek[dayOfWeek];
+            const average = await this.dailyRepository.average(day as keyof Daily, { year, weekNum, userId: Not(0) });
+
+            const updateCondition = { userId: 0, year, weekNum };
+            let updateData:object;
+            let roundedAverage:number|null;    
+        if (average === null) {
+            updateData = {[day]: null};
+            roundedAverage = null;
+        }else{
+            roundedAverage = Math.round(average);
+            updateData = { [day]:  roundedAverage };
+            
         }
-      }
-    
+            
+            const updateAllDailyMood = await this.dailyRepository.update(updateCondition, updateData);
+            
+            if (updateAllDailyMood.affected == 0) {
+                const model = new Daily();
+                model.userId = 0;
+                model.year = year;
+                model.weekNum = weekNum;
+                model[day] = roundedAverage;
+                
+                const saveAllDailyMood = await this.dailyRepository.save(model);
+                if(!saveAllDailyMood){
+                    throw new HttpException("all Daily 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                return await this.updateAllDailyMoodAvg(userId, date);
+            }else{
+                return await this.updateAllDailyMoodAvg(userId, date);
+            }
+        
+
+        } catch (error) {
+        return error;
+        }
+    }
+    // 체크 완
     private updateAllDailyMoodAvg = async (userId:number,date:string) => {
         try {
             const dateClass = new Date(date);
@@ -409,7 +354,7 @@ export class MoodService {
             }
             })
             if(!savedAllDailyMood){
-                throw new HttpException("updateDailyMood가 정상동작하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                return this.updateWeeklyMood(userId,date);
             }else{
 
 
@@ -423,6 +368,9 @@ export class MoodService {
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
                     })
+                    if(updateAllDailyMoodAvg.affected == 0){
+                        throw new HttpException("all Daily를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
                     return this.updateWeeklyMood(userId,date);
                 }else{
                     const updateAllDailyMoodAvg = await this.dailyRepository.update({
@@ -430,15 +378,118 @@ export class MoodService {
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
                     },{weekAvg: weekAvg});
-                    
+                    if(updateAllDailyMoodAvg.affected == 0){
+                        throw new HttpException("all Daily를 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
                     return this.updateWeeklyMood(userId,date);
                 }
             }
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            return error;
         }
     }
-    
+
+    // 체크 완
+    private updateWeeklyMood =async (userId:number,date:string) => {
+
+        try{             
+            const dateClass = new Date(date);
+            const month = moment(dateClass).format('YYYY-MM');
+            const savedDailyMood = await this.dailyRepository.findOne({
+                where:{
+                    userId:userId,
+                    year:dateClass.getFullYear(),
+                    weekNum:moment(dateClass).week()
+                }
+            })
+            const momentObj = moment().week(moment(dateClass).week());
+            const weekOfMonth = momentObj.week() - moment().startOf('month').week() + 1
+            
+            if(!savedDailyMood){
+                const obj = {[`week${weekOfMonth}`]:null};
+                const updateWeeklyMood = await this.weeklyRepository.update({
+                    userId:userId,
+                    month:month
+                },obj);
+                if(updateWeeklyMood.affected == 0){
+                    throw new HttpException("Weekly를 찾을 수 없습니다.",HttpStatus.INTERNAL_SERVER_ERROR);                                
+                }else{
+                    return await this.updateWeeklyMoodAvg(userId,date);
+                }
+            }
+
+            const obj = {
+                [`week${weekOfMonth}`]: savedDailyMood.weekAvg
+            }
+        
+            const updateWeeklyMood = await this.weeklyRepository.update({
+                userId:userId,
+                month:month
+            },obj);
+            if(updateWeeklyMood.affected == 1){
+                return await this.updateWeeklyMoodAvg(userId,date);
+            }else{
+                const weekly = await this.weeklyRepository.create({
+                    userId:userId,
+                    month:month,
+                    ...obj,
+                })
+                const saveWeeklyMood = await this.weeklyRepository.save(weekly);
+                if(!saveWeeklyMood){
+                    throw new HttpException("Weekly를 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                return await this.updateWeeklyMoodAvg(userId,date);
+            }
+            
+        } catch (error) {
+            return error;
+        }
+        
+    }
+
+    // 체크 완
+    private updateWeeklyMoodAvg =async (userId:number,date:string) => {
+        const dateClass = new Date(date);
+        try{             
+            const savedWeeklyMood = await this.weeklyRepository.findOne({
+                where:{
+                    userId:userId,
+                    month:moment(dateClass).format('YYYY-MM'),
+                }
+            })
+            if(!savedWeeklyMood){
+                throw new HttpException("Weekly를 찾을 수 없습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+            }else{
+                const { week1,week2,week3,week4,week5 } = savedWeeklyMood;
+                const weeks = [week1,week2,week3,week4,week5 ]
+                const monthAvg = await this.util.average(weeks);
+                if(monthAvg == null){
+
+                    const updateWeeklyMoodAvg = await this.weeklyRepository.delete({
+                        userId:userId,
+                        month:moment(dateClass).format('YYYY-MM'),
+                    });
+                    if(updateWeeklyMoodAvg.affected == 0){
+                        throw new HttpException("Weekly를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                    return this.updateAllWeeklyMood(userId,date);
+                }else{
+                    const updateWeeklyMoodAvg = await this.weeklyRepository.update({
+                        userId:userId,
+                        month:moment(dateClass).format('YYYY-MM'),
+                    },{monthAvg:monthAvg});
+                    if(updateWeeklyMoodAvg.affected == 0){
+                        throw new HttpException("Weekly를 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                    return this.updateAllWeeklyMood(userId,date);
+                }
+            }
+        } catch (error) {
+            return error;
+        }
+        
+    }
+    // 체크 완
     private updateAllWeeklyMood =async (userId:number,date:string) => {
         try{             
             const dateClass = new Date(date);
@@ -450,21 +501,26 @@ export class MoodService {
                 }
             })
             // 데일리 찾음 없음?
+
             const momentObj = moment().week(moment(dateClass).week());
             const weekOfMonth = momentObj.week() - moment().startOf('month').week() + 1
-            
+            let obj:object;
             if(!savedAllDailyMood){
-                throw new HttpException("updateDailyMood가 정상동작하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);                                
+                obj = {
+                    [`week${weekOfMonth}`]: null
+                }
             }else{
-                const obj = {
+                obj = {
                     [`week${weekOfMonth}`]: savedAllDailyMood.weekAvg
                 }
-            
+            }
+
             const updateAllWeeklyMood = await this.weeklyRepository.update({
                 userId:0,
                 month:moment(dateClass).format('YYYY-MM'),
             },obj);
             
+
             if(updateAllWeeklyMood.affected == 1){
                 return await this.updateAllWeeklyMoodAvg(userId,date);
                 
@@ -472,16 +528,18 @@ export class MoodService {
                 const weekly = await this.weeklyRepository.create({
                     userId:0,
                     month:moment(dateClass).format('YYYY-MM'),
-                    ...obj,
-                    monthAvg:savedAllDailyMood.weekAvg
+                    ...obj
                 })
                 const saveAllWeeklyMood = await this.weeklyRepository.save(weekly);
-                
+
+                if(!saveAllWeeklyMood){
+                    throw new HttpException("All Weekly를 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
                 return await this.updateAllWeeklyMoodAvg(userId,date);
             }
-        }
+        
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            return error;
         }
         
     }
@@ -496,7 +554,7 @@ export class MoodService {
                 }
             })
             if(!savedAllWeeklyMood){
-                throw new HttpException("updateAllWeeklyMood가 정상동작하지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new HttpException("all Weekly를 찾을 수 없습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
             }else{
 
                 const { week1,week2,week3,week4,week5 } = savedAllWeeklyMood;
@@ -509,7 +567,10 @@ export class MoodService {
                         userId:0,
                         month:moment(dateClass).format('YYYY-MM'),
                     });
-                    
+                    if(updateAllWeeklyMoodAvg.affected==0){
+                        throw new HttpException("all Weekly를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
                     return "완료되었습니다.";
                     
                 }else{
@@ -519,81 +580,112 @@ export class MoodService {
                         month:moment(dateClass).format('YYYY-MM'),
                     },{monthAvg:monthAvg});
                     
+                    if(updateAllWeeklyMoodAvg.affected == 0){
+                        throw new HttpException("all Weekly를 업데이트 하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
                     return "완료되었습니다.";
-                    
                 }
             }
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            return error;
         }
         
     }
 
-    private updateWeatherRelation =async (userId:number,mood:number,weather:number[]):Promise<void> => {
-        //userId별로 생성 update하고 없으면 save하는걸로 오케
+    private updateWeatherRelation =async (userId:number,mood:number,weather:number[],flag:boolean):Promise<string|Error> => {
         try {
-            
-            weather.forEach(async (weatherId) => {
-                const updateWeatherMoodRelation = await this.weatherMoodRelationRepository.increment({
-                    userId:userId,
-                    weatherId:weatherId,
-                },`mood${mood}`,1);
-                
-                if(updateWeatherMoodRelation.affected == 0){
+            if(flag){
+                console.log(weather);
+                weather.map(async (weatherId) => {
+                    const updateWeatherMoodRelation = await this.weatherMoodRelationRepository.increment({
+                        userId:userId,
+                        weatherId:weatherId,
+                    },`mood${mood}`,1);
+                    
+                    if(updateWeatherMoodRelation.affected == 0){
                     const model = new WeatherMoodRelation();
                     model.userId=userId,
                     model.weatherId=weatherId,
                     model[`mood${mood}`] = 1; 
-                    const saveWeatherMoodRelation = await this.weatherMoodRelationRepository.save(model);
+                    const saveWeatherMoodRelation = await this.weatherMoodRelationRepository.save(model);        
                 }
-                
             });
+            
+        }else{
+                
+            weather.map(async (weatherId) => {
+                const updateWeatherMoodRelation = await this.weatherMoodRelationRepository.decrement({
+                    userId:userId,
+                    weatherId:weatherId,
+                },`mood${mood}`,1);
+            });
+        }
+            return "aa";
+        } catch (error) {
+            return error;
+            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private updateWhoRelation =async (userId:number,mood:number,who:number[],flag:boolean) => {
+        try {
+            if(flag){
+
+                who.forEach(async (whoId) => {
+                    const updateWhoMoodRelation = await this.whoMoodRelationRepository.increment({
+                        userId:userId,
+                        whoId:whoId,
+                    },`mood${mood}`,1);
+                    
+                    if(updateWhoMoodRelation.affected == 0){
+                        const model = new WhoMoodRelation();
+                        model.userId=userId,
+                        model.whoId=whoId,
+                        model[`mood${mood}`] = 1; 
+                    const saveWhoMoodRelation = await this.whoMoodRelationRepository.save(model);
+                    }
+                
+                });
+            }else{
+                who.forEach(async (whoId) => {
+                    const updateWhoMoodRelation = await this.whoMoodRelationRepository.decrement({
+                        userId:userId,
+                        whoId:whoId,
+                    },`mood${mood}`,1);
+                });                
+            }
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST);
         }
     }
 
-    private updateWhoRelation =async (userId:number,mood:number,who:number[]) => {
+    private updateWhatRelation =async (userId:number,mood:number,what:number[],flag:boolean) => {
         try {
-            
-            who.forEach(async (whoId) => {
-                const updateWeatherMoodRelation = await this.whoMoodRelationRepository.increment({
-                    userId:userId,
-                    whoId:whoId,
-                },`mood${mood}`,1);
-                
-                if(updateWeatherMoodRelation.affected == 0){
-                    const model = new WhoMoodRelation();
-                    model.userId=userId,
-                    model.whoId=whoId,
-                    model[`mood${mood}`] = 1; 
-                    const saveWeatherMoodRelation = await this.whoMoodRelationRepository.save(model);
-                }
-                
-            });
-        } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
-        }
-    }
+            if(flag){
 
-    private updateWhatRelation =async (userId:number,mood:number,what:number[]) => {
-        try {
-            
-            what.forEach(async (whatId) => {
-                const updateWeatherMoodRelation = await this.whatMoodRelationRepository.increment({
-                    userId:userId,
-                    whatId:whatId,
-                },`mood${mood}`,1);
-                
-                if(updateWeatherMoodRelation.affected == 0){
-                    const model = new WhatMoodRelation();
-                    model.userId=userId,
-                    model.whatId=whatId,
-                    model[`mood${mood}`] = 1; 
-                    const saveWeatherMoodRelation = await this.whatMoodRelationRepository.save(model);
-                }
-                
-            });
+                what.forEach(async (whatId) => {
+                    const updateWhatMoodRelation = await this.whatMoodRelationRepository.increment({
+                        userId:userId,
+                        whatId:whatId,
+                    },`mood${mood}`,1);
+                    
+                    if(updateWhatMoodRelation.affected == 0){
+                        const model = new WhatMoodRelation();
+                        model.userId=userId,
+                        model.whatId=whatId,
+                        model[`mood${mood}`] = 1; 
+                        const saveWhatMoodRelation = await this.whatMoodRelationRepository.save(model);
+                    }
+                    
+                });
+            }else{
+                what.forEach(async (whatId) => {
+                    const updateWhatMoodRelation = await this.whatMoodRelationRepository.decrement({
+                        userId:userId,
+                        whatId:whatId,
+                    },`mood${mood}`,1);
+                });
+            }
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST);
         }
@@ -601,9 +693,10 @@ export class MoodService {
 
 //=========================================================
     private dbCaching = async () => {
-        cachedWeather = await this.weatherRepository.find({});
-        cachedWho = await this.whoRepository.find({});
-        cachedWhat = await this.whatRepository.find({});
+        cachedWeather = await this.weatherRepository.find({order:{weatherId:"ASC"}});
+        cachedWho = await this.whoRepository.find({order:{whoId:"ASC"}});
+        cachedWhat = await this.whatRepository.find({order:{whatId:"ASC"}});
+
     }
 
     private dbSetup =async () => {
