@@ -19,7 +19,7 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<string> {
     try {
-      typia.assert<LoginDto>(body);
+      // typia.assert<LoginDto>(body);
       const login = await this.authService.login(body);
       const accessToken = await this.authService.generateAccessToken(login);
       const refreshToken = await this.authService.generateRefreshToken(login);

@@ -1,22 +1,13 @@
 
-import { Type } from 'class-transformer';
+export interface MoodDto{
 
-
-
-export class MoodDto{
-
-    // @Type(()=>Number)
-    date:string;
-    
-    @Type(()=>Number)
     mood:number;
+
+    weather:number[];
+
+    who:number[];
+
+    what:number[];
     
-    @Type(() => Number)
-    weather: number[]; 
-    
-    @Type(() => Number)
-    who: number[];
-    
-    @Type(() => Number)
-    what: number[];
+    date:string;
 }

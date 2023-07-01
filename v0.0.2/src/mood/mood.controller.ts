@@ -2,10 +2,10 @@ import { Controller, HttpException, HttpStatus, Req, UseGuards } from '@nestjs/c
 import { Request } from 'express';
 import { CookieDto } from 'src/dto/cookie.dto';
 import { MoodService } from './mood.service';
-import { MoodDto } from 'src/dto/mood.dto';
-import { TypedRoute,TypedParam } from '@nestia/core';
+import { TypedRoute,TypedParam, TypedBody } from '@nestia/core';
 import typia from 'typia';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { MoodDto } from 'src/dto/mood.dto';
 
 @Controller('mood')
 export class MoodController {
@@ -15,14 +15,13 @@ export class MoodController {
     
     @UseGuards(AuthGuard)
     @TypedRoute.Post()
-    async insertMood(@Req() req:Request){
+    async insertMood(@TypedBody() body:MoodDto,@Req() req:Request){
         try {
             const cookie:CookieDto = req.cookies;
-            const body:MoodDto = req.body;
             const {userId} = cookie;
             const {date,mood,weather,who,what} = body;
             
-            return await this.moodService.saveMood(userId,date,mood,weather,who,what);
+            return await this.moodService.startSaveMood(userId,date,mood,weather,who,what);
   
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST);
@@ -31,9 +30,9 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/daily/all/:date')
-    getAllDailyMood(@Req() req:Request){
+    getAllDailyMood(@TypedParam("date") date:string , @Req() req:Request){
         try{
-            const {date} = req.params;
+            // const {date} = req.params;
             return this.moodService.getDailyMood(0,date);
         }catch (error){
             throw new HttpException(error,HttpStatus.BAD_REQUEST);
@@ -42,26 +41,26 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/weekly/all/:date')
-    getAllWeeklyMood(@Req() req:Request){
-        const {date} = req.params;
+    getAllWeeklyMood(@TypedParam("date") date:string , @Req() req:Request){
+        // const {date} = req.params;
         return this.moodService.getWeeklyMood(0,date);
     }
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/daily/:date')
-    getDailyMood(@Req() req:Request){
+    getDailyMood(@TypedParam("date") date:string,@Req() req:Request){
         const cookie:CookieDto = req.cookies;
         const {userId} = cookie;
-        const {date} = req.params;
+        // const {date} = req.params;
         return this.moodService.getDailyMood(userId,date); 
     }
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/weekly/:date')
-    getWeeklyMood(@Req() req:Request){
+    getWeeklyMood(@TypedParam("date") date:string,@Req() req:Request){
         const cookie:CookieDto = req.cookies;
         const {userId} = cookie;
-        const {date} = req.params;
+        // const {date} = req.params;
         return this.moodService.getWeeklyMood(userId,date);
     }
 
@@ -72,35 +71,34 @@ export class MoodController {
         const {userId} = cookie;
         return this.moodService.getRelation(userId);
     }
-    
+
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/:date')
-    getMood(@Req() req:Request){
+    getMood(@TypedParam("date") date:string,@Req() req:Request){
         try {
             const cookie:CookieDto = req.cookies;
             const {userId} = cookie;
-            const {date} = req.params;
+            // const {date} = req.params;
 
             return this.moodService.getMood(userId,date);
         } catch (error) {
             return error;
         }
     }
+    
     @UseGuards(AuthGuard)
     @TypedRoute.Delete()
-    async deleteMood(@Req() req:Request){
+    async deleteMood(@TypedBody() body:{date:string},@Req() req:Request){
         try {
             const cookie:CookieDto = req.cookies;
-            const body:MoodDto = req.body;
             const {userId} = cookie;
-            const {date,mood} = body;    
-            return await this.moodService.deleteMood(userId,date);
+            const {date} = body;    
+            return await this.moodService.startDeleteMood(userId,date,null);
         
         } catch (error) {
             throw new HttpException(error,HttpStatus.BAD_REQUEST); 
         }
     }
-
 
     
 

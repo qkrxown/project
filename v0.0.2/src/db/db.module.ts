@@ -10,16 +10,18 @@ import { Weekly } from './mysql/weekly.entity';
 import { WeatherMoodRelation } from './mysql/relationWeather.entity';
 import { WhatMoodRelation } from './mysql/relationWhat.entity';
 import { WhoMoodRelation } from './mysql/relationWho.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
     imports:[
+        ConfigModule.forRoot({envFilePath:'config.env'}),
         TypeOrmModule.forRoot({
             type: 'mysql',
-            host: '112.221.245.46',
-            port: 5000,
-            username: 'root',
-            password: 'inno99059905',
-            database: 'project',
+            host: process.env.dbHost,
+            port: Number(process.env.dbPort),
+            username: process.env.dbUserName,
+            password: process.env.dbPw,
+            database: process.env.dbName,
             entities: [User,Who,Weather,What,Mood,Daily,Weekly,WeatherMoodRelation,WhatMoodRelation,WhoMoodRelation],
             //테스트시 사용 옵션
             synchronize:true, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성

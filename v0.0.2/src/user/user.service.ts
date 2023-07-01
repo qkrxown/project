@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { User } from 'src/db/mysql/user.entity';
 import { hash } from 'bcrypt';
 import { UserDto } from 'src/dto/user.dto';
-import { CookieDto } from 'src/dto/cookie.dto';
 
 @Injectable()
 export class UserService {
@@ -30,13 +29,13 @@ export class UserService {
 
     getUserList = async ()=>{
         try {
-            const result = await this.userRepository.find();
+            const result = await this.userRepository.find({select:{nickName:true}});
             return result;
         } catch (error) {
             console.log(error);
         }
     }  
-
+    /*
     getUser = async (userId:number)=>{
         try {
             const result = await this.userRepository.findOne({
@@ -49,12 +48,12 @@ export class UserService {
             console.log(error);
         }
     }  
-
-    updateUser = async (userId:number,user:UserDto)=>{
+    */
+    updateUser = async (userId:number,body:UserDto)=>{
         try {
             const result = await this.userRepository.update({
                 userId:userId
-                },user);
+                },body);
             return result;
         } catch (error) {
             console.log(error);

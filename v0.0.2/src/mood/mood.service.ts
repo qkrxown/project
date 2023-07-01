@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository,Not } from 'typeorm';
+import { Repository,Not,EntityManager } from 'typeorm';
 import { Mood } from 'src/db/mysql/mood.entity';
 import { Weather } from 'src/db/mysql/weather.entity';
 import { Who } from 'src/db/mysql/who.entity';
@@ -12,6 +12,7 @@ import { Util } from 'src/util/util';
 import { WeatherMoodRelation } from 'src/db/mysql/relationWeather.entity';
 import { WhatMoodRelation } from 'src/db/mysql/relationWhat.entity';
 import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
+import { EncryptedController } from '@nestia/core';
 
 var cachedWho: Who[] = [];
 var cachedWhat: What[] = [];
@@ -37,7 +38,6 @@ enum daysOfWeek {
 @Injectable()
 export class MoodService {
 
-    
     constructor(
         @InjectRepository(Mood)
         private readonly moodRepository:Repository<Mood>,
@@ -58,7 +58,8 @@ export class MoodService {
         @InjectRepository(WhoMoodRelation)
         private readonly whoMoodRelationRepository:Repository<WhoMoodRelation>,
 
-        private readonly util:Util
+        private readonly util:Util,
+        private readonly entityManager: EntityManager,
     ){
         this.dbSetup();
     }
@@ -81,40 +82,81 @@ export class MoodService {
             return mood;
 
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     //체크 완
-    saveMood = async (userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
-        
+    startSaveMood =async (userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
+ 
+
         try {
-        const weatherList:number[] = [...weather];
-        const whoList:number[] = [...who];
-        const whatList:number[] = [...what];
+            const transaction = await this.entityManager.transaction(async transaction=>{
+            const step1 = await this.saveMood(transaction,userId,date,mood,weather,who,what);
+            // console.log('1',step1);
+            const step2 = await this.updateDailyMood(transaction,userId,date,mood);
+            // console.log('2',step2);
+            const step3 = await this.updateDailyMoodAvg(transaction,userId,date);
+            // console.log('3',step3);
+            const step4 = await this.updateAllDailyMood(transaction,userId,date);
+            // console.log('4',step4);
+            const step5 = await this.updateAllDailyMoodAvg(transaction,userId, date);
+            // console.log('5',step5);
+            const step6 = await this.updateWeeklyMood(transaction,userId,date);
+            // console.log('6',step6);
+            const step7 = await this.updateWeeklyMoodAvg(transaction,userId,date);
+            // console.log('7',step7);
+            const step8 = await this.updateAllWeeklyMood(transaction,userId,date);
+            // console.log('8',step8);
+            const step9 = await this.updateAllWeeklyMoodAvg(transaction,userId,date);
+            // console.log('9',step9);
 
-        await this.updateWeatherRelation(userId,mood,[...weather],true);
-        await this.updateWhatRelation(userId,mood,[...what],true);
-        await this.updateWhoRelation(userId,mood,[...who],true);
+            return true;
+        });
 
-
-            const moodModel = new Mood();
-                moodModel.date = date;
-                moodModel.userId = userId;
-                moodModel.mood = mood;
-                moodModel.weather = weatherList.map(index => cachedWeather[index-1]);
-                moodModel.who = whoList.map(index => cachedWho[index-1]);
-                moodModel.what = whatList.map(index => cachedWhat[index-1]);
-            
-                const savedMood = await this.moodRepository.save(moodModel);
-                if(!savedMood){
-                    throw new HttpException("Mood를 저장하지 못했습니다.",HttpStatus.BAD_REQUEST);
-                }
-            return await this.updateDailyMood(userId,date,mood);
-            
+            return transaction; 
         } catch (error) {
-            return error;
-        }        
+
+            throw error;
+        }
+
     }
+
+    startDeleteMood =async (userId:number, date:string, mood:null) => {
+ 
+        try {
+            const transaction = await this.entityManager.transaction(async transaction=>{
+            const step1 = await this.deleteMood(transaction,userId,date);
+            // console.log('1',step1);
+            const step2 = await this.updateDailyMood(transaction,userId,date,mood);
+            // console.log('2',step2);
+            const step3 = await this.updateDailyMoodAvg(transaction,userId,date);
+            // console.log('3',step3);
+            const step4 = await this.updateAllDailyMood(transaction,userId,date);
+            // console.log('4',step4);
+            const step5 = await this.updateAllDailyMoodAvg(transaction,userId, date);
+            // console.log('5',step5);
+            const step6 = await this.updateWeeklyMood(transaction,userId,date);
+            // console.log('6',step6);
+            const step7 = await this.updateWeeklyMoodAvg(transaction,userId,date);
+            // console.log('7',step7);
+            const step8 = await this.updateAllWeeklyMood(transaction,userId,date);
+            // console.log('8',step8);
+            const step9 = await this.updateAllWeeklyMoodAvg(transaction,userId,date);
+            // console.log('9',step9);
+
+            return true;
+        });
+
+            return transaction; 
+        } catch (error) {
+
+            throw error;
+        }
+
+    }
+
+
+
     //체크 완
     getDailyMood =async (userId:number,date:string) => {
         
@@ -135,7 +177,7 @@ export class MoodService {
             return getAvg;
     
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     //체크 완
@@ -156,13 +198,28 @@ export class MoodService {
             return getAvg;
 
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     //체크 완
-    deleteMood = async (userId:number,date:string) => {
+    getRelation =async (userId:number) => {
+        const weatherRelation = await this.weatherMoodRelationRepository.find({
+            where:{userId:userId}
+        });
+        const whatRelation = await this.whatMoodRelationRepository.find({
+            where:{userId:userId}
+        });
+        const whoRelation = await this.whoMoodRelationRepository.find({
+            where:{userId:userId}
+        })
+
+        const result = [...weatherRelation,...whatRelation,...whoRelation];
+        return result;
+    }
+    //체크 완
+    private deleteMood = async (transaction:EntityManager,userId:number,date:string) => {
         try {
-            const findMood = await this.moodRepository.findOne({
+            const findMood = await transaction.findOne(Mood,{
                 where:{
                     userId:userId,
                     date:date
@@ -181,43 +238,61 @@ export class MoodService {
             const whatId = [...what].map(x=>x.whatId);
             const whoId = [...who].map(x=>x.whoId);
 
-            await this.updateWeatherRelation(userId,mood,weatherId,false);
-            await this.updateWhatRelation(userId,mood,whatId,false);
-            await this.updateWhoRelation(userId,mood,whoId,false);
+            await this.updateWeatherRelation(transaction,userId,mood,weatherId,false);
+            await this.updateWhatRelation(transaction,userId,mood,whatId,false);
+            await this.updateWhoRelation(transaction,userId,mood,whoId,false);
 
             if(deleteMood.affected == 1){
-                return await this.updateDailyMood(userId,date,null);
+                return true;
             }else{
                 throw new HttpException("삭제하지 못했습니다.",HttpStatus.BAD_REQUEST);
             }
         } catch (error) {
-            return error;
+            throw error;
         }        
     }
-
-    getRelation =async (userId:number) => {
-        const weatherRelation = await this.weatherMoodRelationRepository.find({
-            where:{userId:userId}
-        });
-        console.log(weatherRelation);
-        const whatRelation = await this.whatMoodRelationRepository.find({
-            where:{userId:userId}
-        });
-        const whoRelation = await this.whoMoodRelationRepository.find({
-            where:{userId:userId}
-        })
-
-        const result = [...weatherRelation,...whatRelation,...whoRelation];
-        return result;
-    }
     //체크 완
-    private updateDailyMood =async (userId:number,date:string,mood:number|null) => {
+    private saveMood = async (transaction:EntityManager,userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
+
+        try {
+
+
+
+        const weatherList:number[] = [...weather];
+        const whoList:number[] = [...who];
+        const whatList:number[] = [...what];
+
+        await this.updateWeatherRelation(transaction,userId,mood,[...weather],true);
+        await this.updateWhatRelation(transaction,userId,mood,[...what],true);
+        await this.updateWhoRelation(transaction,userId,mood,[...who],true);
+
+
+            const moodModel = new Mood();
+                moodModel.date = date;
+                moodModel.userId = userId;
+                moodModel.mood = mood;
+                moodModel.weather = weatherList.map(index => cachedWeather[index-1]);
+                moodModel.who = whoList.map(index => cachedWho[index-1]);
+                moodModel.what = whatList.map(index => cachedWhat[index-1]);
+            
+                const savedMood = await transaction.save(Mood,moodModel);
+                if(!savedMood){
+                    throw new HttpException("Mood를 저장하지 못했습니다.",HttpStatus.BAD_REQUEST);
+                }
+            
+                return true;
+        } catch (error) {
+            throw error;
+        }        
+    }
+    //체크 완 userId = 0
+    private updateDailyMood =async (transaction:EntityManager,userId:number,date:string,mood:number|null) => {
 
         const dateClass = new Date(date);
         const day = daysOfWeek[new Date(date).getDay()];
         const obj = {[day]:mood};
         try {
-            const saveAvg = await this.dailyRepository.update({
+            const saveAvg = await transaction.update(Daily,{
                 userId:userId,
                 year:dateClass.getFullYear(),
                 weekNum:moment(dateClass).week(),
@@ -225,36 +300,35 @@ export class MoodService {
             },obj);
             
             if(saveAvg.affected==1){
-                return await this.updateDailyMoodAvg(userId,date);    
+                return true;    
             }else{
 
-                const daily = await this.dailyRepository.create({
+                const daily = await transaction.create(Daily,{
                     userId:userId,
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week(),
                     ...obj
                 })
-                const saveAvg = await this.dailyRepository.save(daily);
+                const saveAvg = await transaction.save(Daily,daily);
                 if(!saveAvg){
                     throw new HttpException("Daily가 저장되지 않았습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateDailyMoodAvg(userId,date);
+                return true;
             }
 
 
         } catch (error) {
-            return error;
+            throw error;
         }
         
 
     }
     //체크 완
-    private updateDailyMoodAvg = async (userId:number,date:string) => {
+    private updateDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string) => {
 
         try {
             const dateClass = new Date(date);
-            
-            const savedDailyMood = await this.dailyRepository.findOne({
+            const savedDailyMood = await transaction.findOne(Daily,{
                 where:{
                 userId:userId,
                 year:dateClass.getFullYear(),
@@ -269,7 +343,7 @@ export class MoodService {
             const weekAvg = await this.util.average(array);
 
             if(weekAvg == null){
-                const updateDailyMoodAvg = await this.dailyRepository.delete({
+                const updateDailyMoodAvg = await transaction.delete(Daily,{
                     userId:userId,
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week()
@@ -277,9 +351,9 @@ export class MoodService {
                 if(updateDailyMoodAvg.affected == 0){
                     throw new HttpException("Daily 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateAllDailyMood(userId,date);
+                return true;
             }else{
-                const updateDailyMoodAvg = await this.dailyRepository.update({
+                const updateDailyMoodAvg = await transaction.update(Daily,{
                     userId:userId,
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week()
@@ -287,16 +361,16 @@ export class MoodService {
                 if(updateDailyMoodAvg.affected == 0){
                     throw new HttpException("Daily Avg 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateAllDailyMood(userId,date);
+                return true;
             }
 
         } catch (error) {
-            return error;
+            throw error;
         }
     }
 
     //keyof Daily로 switch case문과  type|null 문제 해결되었음
-    private updateAllDailyMood = async (userId: number, date: string) => {
+    private updateAllDailyMood = async (transaction:EntityManager,userId: number, date: string) => {
         try {
             const dateClass = new Date(date);
             const year = dateClass.getFullYear();
@@ -304,7 +378,7 @@ export class MoodService {
 
             const dayOfWeek = new Date(date).getDay();
             const day = daysOfWeek[dayOfWeek];
-            const average = await this.dailyRepository.average(day as keyof Daily, { year, weekNum, userId: Not(0) });
+            const average = await transaction.average(Daily,day as keyof Daily, { year, weekNum, userId: Not(0) });
 
             const updateCondition = { userId: 0, year, weekNum };
             let updateData:object;
@@ -318,7 +392,7 @@ export class MoodService {
             
         }
             
-            const updateAllDailyMood = await this.dailyRepository.update(updateCondition, updateData);
+            const updateAllDailyMood = await transaction.update(Daily,updateCondition, updateData);
             
             if (updateAllDailyMood.affected == 0) {
                 const model = new Daily();
@@ -327,26 +401,26 @@ export class MoodService {
                 model.weekNum = weekNum;
                 model[day] = roundedAverage;
                 
-                const saveAllDailyMood = await this.dailyRepository.save(model);
+                const saveAllDailyMood = await transaction.save(Daily,model);
                 if(!saveAllDailyMood){
                     throw new HttpException("all Daily 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateAllDailyMoodAvg(userId, date);
+                return true;
             }else{
-                return await this.updateAllDailyMoodAvg(userId, date);
+                return true;
             }
         
 
         } catch (error) {
-        return error;
+        throw error;
         }
     }
     // 체크 완
-    private updateAllDailyMoodAvg = async (userId:number,date:string) => {
+    private updateAllDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string) => {
         try {
             const dateClass = new Date(date);
             
-            const savedAllDailyMood = await this.dailyRepository.findOne({
+            const savedAllDailyMood = await transaction.findOne(Daily,{
                 where:{
                 userId:0,
                 year:dateClass.getFullYear(),
@@ -354,7 +428,7 @@ export class MoodService {
             }
             })
             if(!savedAllDailyMood){
-                return this.updateWeeklyMood(userId,date);
+                return true;
             }else{
 
 
@@ -363,7 +437,7 @@ export class MoodService {
                 const weekAvg = await this.util.average(days);
                 
                 if(weekAvg == null){
-                    const updateAllDailyMoodAvg = await this.dailyRepository.delete({
+                    const updateAllDailyMoodAvg = await transaction.delete(Daily,{
                         userId:0,
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
@@ -371,9 +445,9 @@ export class MoodService {
                     if(updateAllDailyMoodAvg.affected == 0){
                         throw new HttpException("all Daily를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
-                    return this.updateWeeklyMood(userId,date);
+                    return true;
                 }else{
-                    const updateAllDailyMoodAvg = await this.dailyRepository.update({
+                    const updateAllDailyMoodAvg = await transaction.update(Daily,{
                         userId:0,
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
@@ -381,40 +455,39 @@ export class MoodService {
                     if(updateAllDailyMoodAvg.affected == 0){
                         throw new HttpException("all Daily를 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
-                    return this.updateWeeklyMood(userId,date);
+                    return true;
                 }
             }
         } catch (error) {
-            return error;
+            throw error;
         }
     }
 
     // 체크 완
-    private updateWeeklyMood =async (userId:number,date:string) => {
+    private updateWeeklyMood =async (transaction:EntityManager,userId:number,date:string) => {
 
         try{             
             const dateClass = new Date(date);
             const month = moment(dateClass).format('YYYY-MM');
-            const savedDailyMood = await this.dailyRepository.findOne({
+            const savedDailyMood = await transaction.findOne(Daily,{
                 where:{
                     userId:userId,
                     year:dateClass.getFullYear(),
                     weekNum:moment(dateClass).week()
                 }
             })
-            const momentObj = moment().week(moment(dateClass).week());
-            const weekOfMonth = momentObj.week() - moment().startOf('month').week() + 1
-            
+            const momentObj = moment().week(moment(dateClass).week()) ;
+            const weekOfMonth = momentObj.week() - (moment(dateClass).startOf('month').week() - 1)
             if(!savedDailyMood){
                 const obj = {[`week${weekOfMonth}`]:null};
-                const updateWeeklyMood = await this.weeklyRepository.update({
+                const updateWeeklyMood = await transaction.update(Weekly,{
                     userId:userId,
                     month:month
                 },obj);
                 if(updateWeeklyMood.affected == 0){
                     throw new HttpException("Weekly를 찾을 수 없습니다.",HttpStatus.INTERNAL_SERVER_ERROR);                                
                 }else{
-                    return await this.updateWeeklyMoodAvg(userId,date);
+                    return true;
                 }
             }
 
@@ -422,36 +495,37 @@ export class MoodService {
                 [`week${weekOfMonth}`]: savedDailyMood.weekAvg
             }
         
-            const updateWeeklyMood = await this.weeklyRepository.update({
+            const updateWeeklyMood = await transaction.update(Weekly,{
                 userId:userId,
                 month:month
             },obj);
             if(updateWeeklyMood.affected == 1){
-                return await this.updateWeeklyMoodAvg(userId,date);
+                return true;
             }else{
-                const weekly = await this.weeklyRepository.create({
+                const weekly = await transaction.create(Weekly,{
                     userId:userId,
                     month:month,
                     ...obj,
                 })
-                const saveWeeklyMood = await this.weeklyRepository.save(weekly);
+                const saveWeeklyMood = await transaction.save(Weekly,weekly);
                 if(!saveWeeklyMood){
                     throw new HttpException("Weekly를 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateWeeklyMoodAvg(userId,date);
+                return true;
             }
             
         } catch (error) {
-            return error;
+            console.log(error);
+            throw error;
         }
         
     }
 
     // 체크 완
-    private updateWeeklyMoodAvg =async (userId:number,date:string) => {
+    private updateWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string) => {
         const dateClass = new Date(date);
         try{             
-            const savedWeeklyMood = await this.weeklyRepository.findOne({
+            const savedWeeklyMood = await transaction.findOne(Weekly,{
                 where:{
                     userId:userId,
                     month:moment(dateClass).format('YYYY-MM'),
@@ -465,35 +539,35 @@ export class MoodService {
                 const monthAvg = await this.util.average(weeks);
                 if(monthAvg == null){
 
-                    const updateWeeklyMoodAvg = await this.weeklyRepository.delete({
+                    const updateWeeklyMoodAvg = await transaction.delete(Weekly,{
                         userId:userId,
                         month:moment(dateClass).format('YYYY-MM'),
                     });
                     if(updateWeeklyMoodAvg.affected == 0){
                         throw new HttpException("Weekly를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
-                    return this.updateAllWeeklyMood(userId,date);
+                    return true;
                 }else{
-                    const updateWeeklyMoodAvg = await this.weeklyRepository.update({
+                    const updateWeeklyMoodAvg = await transaction.update(Weekly,{
                         userId:userId,
                         month:moment(dateClass).format('YYYY-MM'),
                     },{monthAvg:monthAvg});
                     if(updateWeeklyMoodAvg.affected == 0){
                         throw new HttpException("Weekly를 업데이트하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
-                    return this.updateAllWeeklyMood(userId,date);
+                    return true;
                 }
             }
         } catch (error) {
-            return error;
+            throw error;
         }
         
     }
     // 체크 완
-    private updateAllWeeklyMood =async (userId:number,date:string) => {
+    private updateAllWeeklyMood =async (transaction:EntityManager,userId:number,date:string) => {
         try{             
             const dateClass = new Date(date);
-            const savedAllDailyMood = await this.dailyRepository.findOne({
+            const savedAllDailyMood = await transaction.findOne(Daily,{
                 where:{
                 userId:0,
                 year:dateClass.getFullYear(),
@@ -503,7 +577,7 @@ export class MoodService {
             // 데일리 찾음 없음?
 
             const momentObj = moment().week(moment(dateClass).week());
-            const weekOfMonth = momentObj.week() - moment().startOf('month').week() + 1
+            const weekOfMonth = momentObj.week() - (moment(dateClass).startOf('month').week() - 1)
             let obj:object;
             if(!savedAllDailyMood){
                 obj = {
@@ -515,39 +589,39 @@ export class MoodService {
                 }
             }
 
-            const updateAllWeeklyMood = await this.weeklyRepository.update({
+            const updateAllWeeklyMood = await transaction.update(Weekly,{
                 userId:0,
                 month:moment(dateClass).format('YYYY-MM'),
             },obj);
             
 
             if(updateAllWeeklyMood.affected == 1){
-                return await this.updateAllWeeklyMoodAvg(userId,date);
+                return true;
                 
             }else{
-                const weekly = await this.weeklyRepository.create({
+                const weekly = await transaction.create(Weekly,{
                     userId:0,
                     month:moment(dateClass).format('YYYY-MM'),
                     ...obj
                 })
-                const saveAllWeeklyMood = await this.weeklyRepository.save(weekly);
+                const saveAllWeeklyMood = await transaction.save(Weekly,weekly);
 
                 if(!saveAllWeeklyMood){
                     throw new HttpException("All Weekly를 저장하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                return await this.updateAllWeeklyMoodAvg(userId,date);
+                return true;
             }
         
         } catch (error) {
-            return error;
+            throw error;
         }
         
     }
 
-    private updateAllWeeklyMoodAvg =async (userId:number,date:string) => {
+    private updateAllWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string) => {
         const dateClass = new Date(date);
         try{             
-            const savedAllWeeklyMood = await this.weeklyRepository.findOne({
+            const savedAllWeeklyMood = await transaction.findOne(Weekly,{
                 where:{
                     userId:0,
                     month:moment(dateClass).format('YYYY-MM'),
@@ -563,7 +637,7 @@ export class MoodService {
                 
                 if(monthAvg == null){
                     
-                    const updateAllWeeklyMoodAvg = await this.weeklyRepository.delete({
+                    const updateAllWeeklyMoodAvg = await transaction.delete(Weekly,{
                         userId:0,
                         month:moment(dateClass).format('YYYY-MM'),
                     });
@@ -571,11 +645,11 @@ export class MoodService {
                         throw new HttpException("all Weekly를 삭제하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
 
-                    return "완료되었습니다.";
+                    return true;
                     
                 }else{
                     
-                    const updateAllWeeklyMoodAvg = await this.weeklyRepository.update({
+                    const updateAllWeeklyMoodAvg = await transaction.update(Weekly,{
                         userId:0,
                         month:moment(dateClass).format('YYYY-MM'),
                     },{monthAvg:monthAvg});
@@ -583,21 +657,20 @@ export class MoodService {
                     if(updateAllWeeklyMoodAvg.affected == 0){
                         throw new HttpException("all Weekly를 업데이트 하지 못했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
                     }
-                    return "완료되었습니다.";
+                    return true;
                 }
             }
         } catch (error) {
-            return error;
+            throw error;
         }
         
     }
 
-    private updateWeatherRelation =async (userId:number,mood:number,weather:number[],flag:boolean):Promise<string|Error> => {
+    private updateWeatherRelation =async (transaction:EntityManager,userId:number,mood:number,weather:number[],flag:boolean):Promise<boolean|Error> => {
         try {
             if(flag){
-                console.log(weather);
                 weather.map(async (weatherId) => {
-                    const updateWeatherMoodRelation = await this.weatherMoodRelationRepository.increment({
+                    const updateWeatherMoodRelation = await transaction.increment(WeatherMoodRelation,{
                         userId:userId,
                         weatherId:weatherId,
                     },`mood${mood}`,1);
@@ -607,32 +680,31 @@ export class MoodService {
                     model.userId=userId,
                     model.weatherId=weatherId,
                     model[`mood${mood}`] = 1; 
-                    const saveWeatherMoodRelation = await this.weatherMoodRelationRepository.save(model);        
+                    const saveWeatherMoodRelation = await transaction.save(WeatherMoodRelation,model);        
                 }
             });
-            
+            return true;
         }else{
                 
             weather.map(async (weatherId) => {
-                const updateWeatherMoodRelation = await this.weatherMoodRelationRepository.decrement({
+                const updateWeatherMoodRelation = await transaction.decrement(WeatherMoodRelation,{
                     userId:userId,
                     weatherId:weatherId,
                 },`mood${mood}`,1);
             });
+            return true;
         }
-            return "aa";
         } catch (error) {
-            return error;
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            throw error;
         }
     }
 
-    private updateWhoRelation =async (userId:number,mood:number,who:number[],flag:boolean) => {
+    private updateWhoRelation =async (transaction:EntityManager,userId:number,mood:number,who:number[],flag:boolean) => {
         try {
             if(flag){
 
                 who.forEach(async (whoId) => {
-                    const updateWhoMoodRelation = await this.whoMoodRelationRepository.increment({
+                    const updateWhoMoodRelation = await transaction.increment(WhoMoodRelation,{
                         userId:userId,
                         whoId:whoId,
                     },`mood${mood}`,1);
@@ -642,29 +714,29 @@ export class MoodService {
                         model.userId=userId,
                         model.whoId=whoId,
                         model[`mood${mood}`] = 1; 
-                    const saveWhoMoodRelation = await this.whoMoodRelationRepository.save(model);
+                    const saveWhoMoodRelation = await transaction.save(WhoMoodRelation,model);
                     }
                 
                 });
             }else{
                 who.forEach(async (whoId) => {
-                    const updateWhoMoodRelation = await this.whoMoodRelationRepository.decrement({
+                    const updateWhoMoodRelation = await transaction.decrement(WhoMoodRelation,{
                         userId:userId,
                         whoId:whoId,
                     },`mood${mood}`,1);
                 });                
             }
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            throw error;
         }
     }
 
-    private updateWhatRelation =async (userId:number,mood:number,what:number[],flag:boolean) => {
+    private updateWhatRelation =async (transaction:EntityManager,userId:number,mood:number,what:number[],flag:boolean) => {
         try {
             if(flag){
 
                 what.forEach(async (whatId) => {
-                    const updateWhatMoodRelation = await this.whatMoodRelationRepository.increment({
+                    const updateWhatMoodRelation = await transaction.increment(WhatMoodRelation,{
                         userId:userId,
                         whatId:whatId,
                     },`mood${mood}`,1);
@@ -674,20 +746,20 @@ export class MoodService {
                         model.userId=userId,
                         model.whatId=whatId,
                         model[`mood${mood}`] = 1; 
-                        const saveWhatMoodRelation = await this.whatMoodRelationRepository.save(model);
+                        const saveWhatMoodRelation = await transaction.save(WhatMoodRelation,model);
                     }
                     
                 });
             }else{
                 what.forEach(async (whatId) => {
-                    const updateWhatMoodRelation = await this.whatMoodRelationRepository.decrement({
+                    const updateWhatMoodRelation = await transaction.decrement(WhatMoodRelation,{
                         userId:userId,
                         whatId:whatId,
                     },`mood${mood}`,1);
                 });
             }
         } catch (error) {
-            throw new HttpException(error,HttpStatus.BAD_REQUEST);
+            throw error;
         }
     }
 

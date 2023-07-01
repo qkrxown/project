@@ -4,7 +4,7 @@ import { UserDto } from 'src/dto/user.dto';
 import { User } from 'src/db/mysql/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Request } from 'express';
-import { TypedParam, TypedRoute } from '@nestia/core';
+import { TypedBody, TypedParam, TypedRoute } from '@nestia/core';
 import { CookieDto } from 'src/dto/cookie.dto';
 import typia from 'typia';
 
@@ -15,7 +15,7 @@ export class UserController {
     //요청사항 email형식 , pw길이제한
     // @UseGuards(AuthGuard)
     @TypedRoute.Post()
-    createUser(@Body() body:UserDto){
+    createUser(@TypedBody() body:UserDto){
         try {
             return this.userService.createUser(body);
         } catch (error) {
@@ -32,7 +32,7 @@ export class UserController {
             return error;
         }
     }
-    
+    /*
     @UseGuards(AuthGuard)
     @TypedRoute.Get()
     getUser(@Req() req:Request){
@@ -44,13 +44,12 @@ export class UserController {
             return error;
         }
     }
-    
+    */
     @UseGuards(AuthGuard)
     @TypedRoute.Put()
-    updateUser(@Req() req:Request){
+    updateUser(@TypedBody() body:UserDto, @Req() req:Request){
         try {
             const cookie:CookieDto = req.cookies
-            const body:UserDto = req.body;
             const {userId} = cookie;
             
             return this.userService.updateUser(userId,body);
