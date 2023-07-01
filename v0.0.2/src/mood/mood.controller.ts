@@ -6,6 +6,12 @@ import { TypedRoute,TypedParam, TypedBody } from '@nestia/core';
 import typia from 'typia';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { MoodDto } from 'src/dto/mood.dto';
+import { Daily } from 'src/db/mysql/daily.entity';
+import { Weekly } from 'src/db/mysql/weekly.entity';
+import { WeatherMoodRelation } from 'src/db/mysql/relationWeather.entity';
+import { WhatMoodRelation } from 'src/db/mysql/relationWhat.entity';
+import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
+import { Mood } from 'src/db/mysql/mood.entity';
 
 @Controller('mood')
 export class MoodController {
@@ -15,7 +21,7 @@ export class MoodController {
     
     @UseGuards(AuthGuard)
     @TypedRoute.Post()
-    async insertMood(@TypedBody() body:MoodDto,@Req() req:Request){
+    async insertMood(@TypedBody() body:MoodDto,@Req() req:Request):Promise<boolean|Error>{
         try {
             const cookie:CookieDto = req.cookies;
             const {userId} = cookie;
@@ -30,7 +36,7 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/daily/all/:date')
-    getAllDailyMood(@TypedParam("date") date:string , @Req() req:Request){
+    getAllDailyMood(@TypedParam("date") date:string , @Req() req:Request):Promise<Daily|Error>{
         try{
             // const {date} = req.params;
             return this.moodService.getDailyMood(0,date);
@@ -41,14 +47,14 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/weekly/all/:date')
-    getAllWeeklyMood(@TypedParam("date") date:string , @Req() req:Request){
+    getAllWeeklyMood(@TypedParam("date") date:string , @Req() req:Request):Promise<Weekly|Error>{
         // const {date} = req.params;
         return this.moodService.getWeeklyMood(0,date);
     }
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/daily/:date')
-    getDailyMood(@TypedParam("date") date:string,@Req() req:Request){
+    getDailyMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Daily|Error>{
         const cookie:CookieDto = req.cookies;
         const {userId} = cookie;
         // const {date} = req.params;
@@ -57,7 +63,7 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/weekly/:date')
-    getWeeklyMood(@TypedParam("date") date:string,@Req() req:Request){
+    getWeeklyMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Weekly|Error>{
         const cookie:CookieDto = req.cookies;
         const {userId} = cookie;
         // const {date} = req.params;
@@ -66,7 +72,7 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/relation')
-    getRelations(@Req() req:Request){
+    getRelations(@Req() req:Request):Promise<Error | (WeatherMoodRelation | WhatMoodRelation | WhoMoodRelation)[]>{
         const cookie:CookieDto = req.cookies;
         const {userId} = cookie;
         return this.moodService.getRelation(userId);
@@ -74,7 +80,7 @@ export class MoodController {
 
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/:date')
-    getMood(@TypedParam("date") date:string,@Req() req:Request){
+    getMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Mood|Error>{
         try {
             const cookie:CookieDto = req.cookies;
             const {userId} = cookie;
@@ -88,7 +94,7 @@ export class MoodController {
     
     @UseGuards(AuthGuard)
     @TypedRoute.Delete()
-    async deleteMood(@TypedBody() body:{date:string},@Req() req:Request){
+    async deleteMood(@TypedBody() body:{date:string},@Req() req:Request):Promise<boolean|Error>{
         try {
             const cookie:CookieDto = req.cookies;
             const {userId} = cookie;

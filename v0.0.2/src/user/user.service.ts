@@ -15,24 +15,25 @@ export class UserService {
         this.dbSetup();
     }
 
-    createUser = async (body:UserDto)=>{
+    createUser = async (body:UserDto):Promise<boolean|Error>=>{
         try {
             const hashedPw = await hash(body.password, Number(process.env.salt));
             body.password = hashedPw;
             const savedUser = await this.userRepository.save(body);
             const { password, ...result } = savedUser;
-            return result;
+            return true;
         } catch (error) {
             throw new HttpException({error: "이미 사용중인 이메일입니다."},HttpStatus.CONFLICT);
         }
     }  
 
-    getUserList = async ()=>{
+    getUserList = async ():Promise<User[]|Error>=>{
         try {
             const result = await this.userRepository.find({select:{nickName:true}});
             return result;
         } catch (error) {
-            console.log(error);
+            throw error;
+
         }
     }  
     /*
@@ -49,28 +50,34 @@ export class UserService {
         }
     }  
     */
-    updateUser = async (userId:number,body:UserDto)=>{
+    updateUser = async (userId:number,body:UserDto):Promise<boolean|Error>=>{
         try {
             const result = await this.userRepository.update({
                 userId:userId
                 },body);
-            return result;
+            if(result.affected==0){
+                throw new HttpException("업데이트에 실패했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return true;
         } catch (error) {
-            console.log(error);
+            throw error;
         }
     }  
 
-    deleteUser = async (userId:number) => {
+    deleteUser = async (userId:number):Promise<boolean|Error> => {
         try {
             const result = await this.userRepository.delete({userId:userId});
-            return result;
+            if(result.affected==0){
+                throw new HttpException("삭제에 실패했습니다.",HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return true;
         } catch (error) {
-            console.log(error);
+            throw error;
         }
         
     }
     
-    private dbSetup = async () => {
+    private dbSetup = async ():Promise<void> => {
         try {
             await this.userRepository.save({
                 userId:0,

@@ -64,7 +64,7 @@ export class MoodService {
         this.dbSetup();
     }
     //체크 완
-    getMood =async (userId:number,date:string) => {
+    getMood =async (userId:number,date:string):Promise<Mood|Error> => {
         try {
 
             const mood = await this.moodRepository.findOne({
@@ -158,7 +158,7 @@ export class MoodService {
 
 
     //체크 완
-    getDailyMood =async (userId:number,date:string) => {
+    getDailyMood =async (userId:number,date:string):Promise<Daily|Error> => {
         
         try {
             
@@ -181,7 +181,7 @@ export class MoodService {
         }
     }
     //체크 완
-    getWeeklyMood =async (userId:number,date:string) => {
+    getWeeklyMood =async (userId:number,date:string):Promise<Weekly|Error> => {
 
         try {
             
@@ -202,22 +202,27 @@ export class MoodService {
         }
     }
     //체크 완
-    getRelation =async (userId:number) => {
-        const weatherRelation = await this.weatherMoodRelationRepository.find({
-            where:{userId:userId}
-        });
-        const whatRelation = await this.whatMoodRelationRepository.find({
-            where:{userId:userId}
-        });
-        const whoRelation = await this.whoMoodRelationRepository.find({
-            where:{userId:userId}
-        })
+    getRelation =async (userId:number):Promise<(WeatherMoodRelation | WhatMoodRelation | WhoMoodRelation)[]|Error> => {
+        try{
 
-        const result = [...weatherRelation,...whatRelation,...whoRelation];
-        return result;
+            const weatherRelation = await this.weatherMoodRelationRepository.find({
+                where:{userId:userId}
+            });
+            const whatRelation = await this.whatMoodRelationRepository.find({
+                where:{userId:userId}
+            });
+            const whoRelation = await this.whoMoodRelationRepository.find({
+                where:{userId:userId}
+            })
+            
+            const result = [...weatherRelation,...whatRelation,...whoRelation];
+            return result;
+        }catch(error){
+            throw error;
+        }
     }
     //체크 완
-    private deleteMood = async (transaction:EntityManager,userId:number,date:string) => {
+    private deleteMood = async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
         try {
             const findMood = await transaction.findOne(Mood,{
                 where:{
@@ -252,7 +257,7 @@ export class MoodService {
         }        
     }
     //체크 완
-    private saveMood = async (transaction:EntityManager,userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
+    private saveMood = async (transaction:EntityManager,userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]):Promise<boolean|Error> => {
 
         try {
 
@@ -286,7 +291,7 @@ export class MoodService {
         }        
     }
     //체크 완 userId = 0
-    private updateDailyMood =async (transaction:EntityManager,userId:number,date:string,mood:number|null) => {
+    private updateDailyMood =async (transaction:EntityManager,userId:number,date:string,mood:number|null):Promise<boolean|Error> => {
 
         const dateClass = new Date(date);
         const day = daysOfWeek[new Date(date).getDay()];
@@ -324,7 +329,7 @@ export class MoodService {
 
     }
     //체크 완
-    private updateDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string) => {
+    private updateDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
 
         try {
             const dateClass = new Date(date);
@@ -370,7 +375,7 @@ export class MoodService {
     }
 
     //keyof Daily로 switch case문과  type|null 문제 해결되었음
-    private updateAllDailyMood = async (transaction:EntityManager,userId: number, date: string) => {
+    private updateAllDailyMood = async (transaction:EntityManager,userId: number, date: string):Promise<boolean|Error> => {
         try {
             const dateClass = new Date(date);
             const year = dateClass.getFullYear();
@@ -416,7 +421,7 @@ export class MoodService {
         }
     }
     // 체크 완
-    private updateAllDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string) => {
+    private updateAllDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
         try {
             const dateClass = new Date(date);
             
@@ -464,7 +469,7 @@ export class MoodService {
     }
 
     // 체크 완
-    private updateWeeklyMood =async (transaction:EntityManager,userId:number,date:string) => {
+    private updateWeeklyMood =async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
 
         try{             
             const dateClass = new Date(date);
@@ -522,7 +527,7 @@ export class MoodService {
     }
 
     // 체크 완
-    private updateWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string) => {
+    private updateWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
         const dateClass = new Date(date);
         try{             
             const savedWeeklyMood = await transaction.findOne(Weekly,{
@@ -564,7 +569,7 @@ export class MoodService {
         
     }
     // 체크 완
-    private updateAllWeeklyMood =async (transaction:EntityManager,userId:number,date:string) => {
+    private updateAllWeeklyMood =async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
         try{             
             const dateClass = new Date(date);
             const savedAllDailyMood = await transaction.findOne(Daily,{
@@ -618,7 +623,7 @@ export class MoodService {
         
     }
 
-    private updateAllWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string) => {
+    private updateAllWeeklyMoodAvg =async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
         const dateClass = new Date(date);
         try{             
             const savedAllWeeklyMood = await transaction.findOne(Weekly,{
@@ -699,7 +704,7 @@ export class MoodService {
         }
     }
 
-    private updateWhoRelation =async (transaction:EntityManager,userId:number,mood:number,who:number[],flag:boolean) => {
+    private updateWhoRelation =async (transaction:EntityManager,userId:number,mood:number,who:number[],flag:boolean):Promise<void|Error> => {
         try {
             if(flag){
 
@@ -716,7 +721,7 @@ export class MoodService {
                         model[`mood${mood}`] = 1; 
                     const saveWhoMoodRelation = await transaction.save(WhoMoodRelation,model);
                     }
-                
+
                 });
             }else{
                 who.forEach(async (whoId) => {
@@ -731,7 +736,7 @@ export class MoodService {
         }
     }
 
-    private updateWhatRelation =async (transaction:EntityManager,userId:number,mood:number,what:number[],flag:boolean) => {
+    private updateWhatRelation =async (transaction:EntityManager,userId:number,mood:number,what:number[],flag:boolean):Promise<void|Error> => {
         try {
             if(flag){
 
@@ -764,14 +769,19 @@ export class MoodService {
     }
 
 //=========================================================
-    private dbCaching = async () => {
-        cachedWeather = await this.weatherRepository.find({order:{weatherId:"ASC"}});
-        cachedWho = await this.whoRepository.find({order:{whoId:"ASC"}});
-        cachedWhat = await this.whatRepository.find({order:{whatId:"ASC"}});
+    private dbCaching = async ():Promise<void|Error> => {
+        try {
+            
+            cachedWeather = await this.weatherRepository.find({order:{weatherId:"ASC"}});
+            cachedWho = await this.whoRepository.find({order:{whoId:"ASC"}});
+            cachedWhat = await this.whatRepository.find({order:{whatId:"ASC"}});
+        } catch (error) {
+            throw error;
+        }
 
     }
 
-    private dbSetup =async () => {
+    private dbSetup =async ():Promise<void|Error> => {
         try {
             
             await this.weatherRepository.save([{
@@ -806,11 +816,10 @@ export class MoodService {
             },{
                 name:'휴가'
             }]);
+            await this.dbCaching();
         } catch (error) {
             console.log('셋팅되어있습니다.');
         }
-        await this.dbCaching();
-        return await "OK";
     }
 
     

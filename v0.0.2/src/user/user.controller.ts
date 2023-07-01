@@ -15,7 +15,7 @@ export class UserController {
     //요청사항 email형식 , pw길이제한
     // @UseGuards(AuthGuard)
     @TypedRoute.Post()
-    createUser(@TypedBody() body:UserDto){
+    createUser(@TypedBody() body:UserDto):Promise<boolean|Error>{
         try {
             return this.userService.createUser(body);
         } catch (error) {
@@ -24,7 +24,7 @@ export class UserController {
     }
     @UseGuards(AuthGuard)
     @TypedRoute.Get('/all')
-    getUserList(){
+    getUserList():Promise<User[]|Error>{
         try {
             // console.log(request);
             return this.userService.getUserList();
@@ -47,7 +47,7 @@ export class UserController {
     */
     @UseGuards(AuthGuard)
     @TypedRoute.Put()
-    updateUser(@TypedBody() body:UserDto, @Req() req:Request){
+    updateUser(@TypedBody() body:UserDto, @Req() req:Request):Promise<boolean|Error>{
         try {
             const cookie:CookieDto = req.cookies
             const {userId} = cookie;
@@ -60,7 +60,7 @@ export class UserController {
     
     @UseGuards(AuthGuard)
     @TypedRoute.Delete()
-    deleteUser(@Req() req:Request){
+    deleteUser(@Req() req:Request):Promise<boolean|Error>{
         try {
             const cookie:CookieDto = req.cookies
             const {userId} = cookie;

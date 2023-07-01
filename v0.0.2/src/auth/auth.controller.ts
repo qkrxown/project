@@ -4,7 +4,6 @@ import { UserService } from 'src/user/user.service';
 import { Response } from 'express';
 import { TypedBody, TypedRoute } from '@nestia/core';
 import { LoginDto } from 'src/dto/login.dto';
-import typia from 'typia';
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +16,7 @@ export class AuthController {
   async login(
     @Body() body: LoginDto,
     @Res() res: Response,
-  ): Promise<string> {
+  ): Promise<boolean|Error> {
     try {
       // typia.assert<LoginDto>(body);
       const login = await this.authService.login(body);
@@ -38,7 +37,29 @@ export class AuthController {
       });
       
       res.send('로그인 되었습니다.');
-      return '로그인 되었습니다.';
+      return true;
+    } catch (error) {
+      throw new HttpException(error, 400, { cause: new Error(error) });
+    }
+  }
+
+  @TypedRoute.Post()
+  async logOut(
+    @Res() res: Response,
+  ): Promise<boolean|Error> {
+    try {
+      res.cookie('accessToken', "", {
+        httpOnly: true,
+      });
+      res.cookie('userId', "", {
+        httpOnly: true,
+      });
+      res.cookie('refreshToken', "", {
+        httpOnly: true,
+      });
+      
+      res.send('로그아웃 되었습니다.');
+      return true;
     } catch (error) {
       throw new HttpException(error, 400, { cause: new Error(error) });
     }

@@ -40,25 +40,35 @@ export class AuthService {
         }
     }
     
-    generateAccessToken = async (user) => {
-        const accessToken = await this.accessTokenService.signAsync({
-            userId:user.userId
-        },{
-            secret:process.env.accessTokenSecret,expiresIn:process.env.accessTokenTimer
+    generateAccessToken = async (user:User):Promise<string> => {
+        try{
+
+            const accessToken = await this.accessTokenService.signAsync({
+                userId:user.userId
+            },{
+                secret:process.env.accessTokenSecret,expiresIn:process.env.accessTokenTimer
         });
         
         return accessToken;
+        }catch(error){
+            throw error;
+        }   
 
     } 
     
-    generateRefreshToken = async (user) => {
-        const refreshToken = await this.refreshTokenService.signAsync({
-            userId:user.userId
-        },{
-            secret:process.env.refreshTokenSecret,expiresIn:process.env.refreshTokenTimer
+    generateRefreshToken = async (user:User):Promise<string> => {
+        try {
+            
+            const refreshToken = await this.refreshTokenService.signAsync({
+                userId:user.userId
+            },{
+                secret:process.env.refreshTokenSecret,expiresIn:process.env.refreshTokenTimer
         });
         
         return refreshToken;
+        } catch (error) {
+            throw error;   
+        }
     } 
     
 }
