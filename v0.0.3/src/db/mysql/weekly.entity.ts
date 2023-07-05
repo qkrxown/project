@@ -1,4 +1,5 @@
-import { Column , Entity, PrimaryColumn } from 'typeorm'
+import { Column , Entity, PrimaryColumn,ManyToOne,JoinColumn } from 'typeorm'
+import { User } from './user.entity';
 
 
 
@@ -8,6 +9,8 @@ import { Column , Entity, PrimaryColumn } from 'typeorm'
     export class Weekly{
 
         @PrimaryColumn()
+        @ManyToOne(() => User,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+        @JoinColumn({name:'userId'})
         userId: number;
         
         @PrimaryColumn()

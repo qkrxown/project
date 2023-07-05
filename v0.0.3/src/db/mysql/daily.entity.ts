@@ -1,10 +1,13 @@
-import { Column , Entity, PrimaryColumn } from 'typeorm'
+import { Column , Entity, PrimaryColumn,ManyToOne,JoinColumn} from 'typeorm'
+import { User } from './user.entity';
 
 
     @Entity()
     export class Daily{
 
         @PrimaryColumn()
+        @ManyToOne(() => User,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+        @JoinColumn({name:'userId'})
         userId: number;
  
         @PrimaryColumn()

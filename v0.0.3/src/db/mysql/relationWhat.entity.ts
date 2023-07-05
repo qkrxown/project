@@ -11,9 +11,13 @@ import { User } from './user.entity';
     export class WhatMoodRelation{
 
         @PrimaryColumn()
+        @ManyToOne(() => User,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+        @JoinColumn({name:'userId'})
         userId: number;
 
         @PrimaryColumn()
+        @ManyToOne(() => What,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+        @JoinColumn({name:'whatId'})
         whatId: number;
         
         @Column({default:0})
