@@ -1,16 +1,26 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { Request,Response } from 'express';
+import { IS_PUBLIC_KEY } from './auth.decorate';
 import { AuthService } from './auth.service';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthGuard implements CanActivate{
   constructor(
+    private authService:AuthService,
     private jwtService:JwtService,
-    private authService:AuthService
+    private reflector:Reflector
   ){}
   //request.headers를 cookies로 변경가능
   async canActivate(context: ExecutionContext): Promise<boolean> {
+
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY,[
+      context.getHandler(),
+      context.getClass()
+    ]);
+    if(isPublic){
+      return true;
+    }
 
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();

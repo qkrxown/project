@@ -1,7 +1,8 @@
-import { Column , Entity, ManyToMany,PrimaryColumn,JoinTable } from 'typeorm'
+import { Column , Entity, ManyToMany,PrimaryColumn,JoinTable,JoinColumn,ManyToOne } from 'typeorm'
 import { Weather } from './weather.entity';
 import { Who } from './who.entity';
 import { What } from './what.entity';
+import { User } from './user.entity';
 
 
 
@@ -11,8 +12,10 @@ import { What } from './what.entity';
 export class Mood{
 
     @PrimaryColumn()
+    @ManyToOne(() => User,{onDelete:"CASCADE",onUpdate:"CASCADE"})
+    @JoinColumn({name:'userId'})
     userId: number;
-    
+
     @PrimaryColumn({type:'date'})
     date:string;
     
@@ -32,6 +35,5 @@ export class Mood{
     @JoinTable()
     what:What[]
 }
-
 
 

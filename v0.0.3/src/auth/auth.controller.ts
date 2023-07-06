@@ -1,24 +1,28 @@
-import { Controller, Post, Body, HttpException, Res } from '@nestjs/common';
+import { Controller, Body, Res, UseFilters } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserService } from 'src/user/user.service';
-import { Response } from 'express';
-import { TypedBody, TypedRoute } from '@nestia/core';
-import { LoginDto } from 'src/dto/login.dto';
 
+import { Response } from 'express';
+import { TypedRoute } from '@nestia/core';
+import { LoginDto } from 'src/dto/login.dto';
+import { HttpExceptionFilter } from 'src/error/httpexception.filter';
+import { Public } from './auth.decorate';
+import typia from 'typia';
+
+@UseFilters(new HttpExceptionFilter())
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private userService: UserService,
   ) {}
 
+  @Public()
   @TypedRoute.Post()
   async login(
     @Body() body: LoginDto,
     @Res() res: Response,
   ): Promise<boolean|Error> {
     try {
-      // typia.assert<LoginDto>(body);
+      typia.assert<LoginDto>(body);
       const login = await this.authService.login(body);
       const accessToken = await this.authService.generateAccessToken(login);
       const refreshToken = await this.authService.generateRefreshToken(login);
@@ -31,7 +35,7 @@ export class AuthController {
       res.send('로그인 되었습니다.');
       return true;
     } catch (error) {
-      throw new HttpException(error, 400, { cause: new Error(error) });
+      throw error;
     }
   }
 
@@ -47,7 +51,7 @@ export class AuthController {
       res.send('로그아웃 되었습니다.');
       return true;
     } catch (error) {
-      throw new HttpException(error, 400, { cause: new Error(error) });
+      throw error;
     }
   }
 }

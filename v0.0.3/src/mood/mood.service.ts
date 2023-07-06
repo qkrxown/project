@@ -260,9 +260,6 @@ export class MoodService {
     private saveMood = async (transaction:EntityManager,userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]):Promise<boolean|Error> => {
 
         try {
-
-
-
         const weatherList:number[] = [...weather];
         const whoList:number[] = [...who];
         const whatList:number[] = [...what];
@@ -280,13 +277,15 @@ export class MoodService {
                 moodModel.who = whoList.map(index => cachedWho[index-1]);
                 moodModel.what = whatList.map(index => cachedWhat[index-1]);
             
-                const savedMood = await transaction.save(Mood,moodModel);
+                const savedMood = await transaction.save(Mood,moodModel,{});
+                
                 if(!savedMood){
                     throw new HttpException("Mood를 저장하지 못했습니다.",HttpStatus.BAD_REQUEST);
                 }
             
                 return true;
         } catch (error) {
+            console.log(error);
             throw error;
         }        
     }

@@ -1,5 +1,6 @@
-import { Column , Entity,Unique, PrimaryGeneratedColumn , ManyToMany } from 'typeorm'
+import { Column , Entity,Unique, PrimaryGeneratedColumn , OneToMany } from 'typeorm'
 import { Mood } from './mood.entity';
+import { WhoMoodRelation } from './relationWho.entity';
 
 
 @Entity()
@@ -11,4 +12,6 @@ export class Who{
     @Unique(['name'])
     name: string;
     
+    @OneToMany(()=>WhoMoodRelation,(whoMoodRelation)=>whoMoodRelation.whoId)
+    relation:WhoMoodRelation[]
 }

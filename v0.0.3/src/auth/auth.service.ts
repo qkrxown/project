@@ -27,7 +27,7 @@ export class AuthService {
             }    
             return hashedPw;
         } catch(error){
-            throw new HttpException(error,400,{cause: new Error(error)});   
+            throw error;   
         }
 
     }

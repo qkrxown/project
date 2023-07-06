@@ -1,5 +1,5 @@
 {
-  "name": "v0.0.2",
+  "name": "v0.0.3",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -87,6 +87,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

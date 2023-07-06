@@ -1,39 +1,40 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from 'src/dto/user.dto';
 import { User } from 'src/db/mysql/user.entity';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { Request } from 'express';
-import { TypedBody, TypedParam, TypedRoute } from '@nestia/core';
-import { CookieDto } from 'src/dto/cookie.dto';
-import typia from 'typia';
+import { TypedBody, TypedRoute } from '@nestia/core';
+import { HttpExceptionFilter } from 'src/error/httpexception.filter';
+import { Public } from 'src/auth/auth.decorate';
 
+@UseFilters(new HttpExceptionFilter())
 @Controller('user')
 export class UserController {
     constructor(private readonly userService:UserService){}
 
     //요청사항 email형식 , pw길이제한
-    // @UseGuards(AuthGuard)
-    @TypedRoute.Post()
+    //  
+    @Public()
+    @Post()
     createUser(@TypedBody() body:UserDto):Promise<boolean|Error>{
         try {
             return this.userService.createUser(body);
         } catch (error) {
-            return error;
+            throw error;
         }
     }
-    @UseGuards(AuthGuard)
-    @TypedRoute.Get('/all')
+     
+    @Get('/all')
     getUserList():Promise<User[]|Error>{
         try {
             // console.log(request);
             return this.userService.getUserList();
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     /*
-    @UseGuards(AuthGuard)
+     
     @TypedRoute.Get()
     getUser(@Req() req:Request){
         try {
@@ -45,7 +46,7 @@ export class UserController {
         }
     }
     */
-    @UseGuards(AuthGuard)
+     
     @TypedRoute.Put()
     updateUser(@TypedBody() body:UserDto, @Req() req:Request):Promise<boolean|Error>{
         try {
@@ -53,18 +54,18 @@ export class UserController {
             
             return this.userService.updateUser(userId,body);
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     
-    @UseGuards(AuthGuard)
+     
     @TypedRoute.Delete()
     deleteUser(@Req() req:Request):Promise<boolean|Error>{
         try {
             const userId:number = Number(req.headers.userid);
             return this.userService.deleteUser(userId);
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     

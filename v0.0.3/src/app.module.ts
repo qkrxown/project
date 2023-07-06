@@ -1,14 +1,13 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import {AppController} from './app.controller';
 import { AppService } from './app.service';
 import { DbModule } from './db/db.module';
-
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './db/mysql/user.entity';
 import { AuthModule } from './auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './user/user.module';
 import { MoodModule } from './mood/mood.module';
+import { LoggerMiddleware } from './logger/logger.middleware';
+import { AuthGuard } from './auth/auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -17,9 +16,19 @@ import { MoodModule } from './mood/mood.module';
   AuthModule,
   UserModule,
   MoodModule,
-  // WebsocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    AuthGuard,
+    {
+      provide:APP_GUARD,
+      useClass:AuthGuard
+    }
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule{
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
