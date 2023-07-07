@@ -15,8 +15,4 @@ export class Weather{
     @OneToMany(()=>WeatherMoodRelation,(weatherMoodRelation)=>weatherMoodRelation.weatherId)
     relation:WeatherMoodRelation[]
     
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 7d4d23148228102a5757ea4fd8c646b4d78a0b78

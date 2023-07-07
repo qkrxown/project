@@ -34,6 +34,6 @@ import { JwtService } from '@nestjs/jwt';
     ]),
   ],
   controllers: [MoodController],
-  providers: [MoodService,Util,JwtService]
+  providers: [MoodService,Util]
 })
 export class MoodModule{}

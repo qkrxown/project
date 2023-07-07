@@ -149,6 +149,7 @@ export class MoodService {
 
             return transaction; 
         } catch (error) {
+
             throw error;
         }
 
@@ -157,7 +158,7 @@ export class MoodService {
 
 
     //체크 완
-    getDailyMood =async (userId:number,date:string) => {
+    getDailyMood =async (userId:number,date:string):Promise<Daily|Error> => {
         
         try {
             
@@ -174,7 +175,7 @@ export class MoodService {
                 throw new HttpException('데이터가 없습니다. 기분을 등록해 보세요',HttpStatus.NOT_FOUND);
             }
             return getAvg;
-            
+    
         } catch (error) {
             throw error;
         }
@@ -816,7 +817,6 @@ export class MoodService {
             }]);
             await this.dbCaching();
         } catch (error) {
-            await this.dbCaching();
             console.log('셋팅되어있습니다.');
         }
     }
