@@ -26,22 +26,22 @@ export class AuthGuard implements CanActivate{
     const response = context.switchToHttp().getResponse();
     const token = request.headers.accesstoken;
     const userId = request.headers.userid;
-
     if(!token){
       throw new UnauthorizedException();
     }
-    
+
     try {
-      const pass = this.jwtService.verify(token,{secret: process.env.accessTokenSecret});
-      if(!pass.userId == userId){
+      const pass = this.jwtService.verify(token,{secret: process.env.accessTokenSecret});  
+      if(pass.userId != userId){
         throw new UnauthorizedException();
       }
     } catch (error) {
-      
+
       if (error.name === 'TokenExpiredError') {
         const userId = request.headers.userid;
         const refreshToken = request.headers.refreshtoken;
-        if(!userId||!refreshToken){
+        const pass = this.jwtService.verify(refreshToken,{secret: process.env.refreshTokenSecret});
+        if(pass.userId != userId){
           throw new UnauthorizedException();
         }
         const newAccessToken = await this.generateAccessTokenFromRefreshToken({userId:userId},refreshToken);
@@ -50,8 +50,9 @@ export class AuthGuard implements CanActivate{
           return true;
         }
         throw new UnauthorizedException();
+      }else{
+        throw new UnauthorizedException();
       }
-      return true;
     }
     return true;
   }

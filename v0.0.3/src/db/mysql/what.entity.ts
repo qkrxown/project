@@ -13,4 +13,8 @@ export class What{
  
     @OneToMany(()=>WhatMoodRelation,(whatMoodRelation)=>whatMoodRelation.whatId)
     relation:WhatMoodRelation[]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7d4d23148228102a5757ea4fd8c646b4d78a0b78

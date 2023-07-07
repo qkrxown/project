@@ -1,4 +1,4 @@
-import { Controller, HttpException, HttpStatus, Req, UseFilters, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Req, UseFilters, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { CookieDto } from 'src/dto/cookie.dto';
 import { MoodService } from './mood.service';
@@ -57,20 +57,20 @@ export class MoodController {
         }
     }
 
-     
-    @TypedRoute.Get('/daily/:date')
-    getDailyMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Daily|Error>{
-        try {
-            
+    @UseGuards(AuthGuard)
+    @Get('/daily/:date')
+    getDailyMood(@TypedParam("date") date:string,@Req() req:Request){
+        try{
+
             const userId:number = Number(req.headers.userid);
             return this.moodService.getDailyMood(userId,date); 
-        } catch (error) {
-            throw error;   
+        }catch(error){
+            throw error;
         }
     }
 
-     
-    @TypedRoute.Get('/weekly/:date')
+    @UseGuards(AuthGuard)
+    @Get('/weekly/:date')
     getWeeklyMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Weekly|Error>{
         try {
             
@@ -85,6 +85,7 @@ export class MoodController {
     @TypedRoute.Get('/relation')
     getRelations(@Req() req:Request):Promise<Error | (WeatherMoodRelation | WhatMoodRelation | WhoMoodRelation)[]>{
         try {
+            
             const userId:number = Number(req.headers.userid);
             return this.moodService.getRelation(userId);
         } catch (error) {
@@ -92,14 +93,14 @@ export class MoodController {
         }
     }
 
-     
-    @TypedRoute.Get('/:date')
-    getMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Mood|Error>{
+    @UseGuards(AuthGuard)
+    @Get('/:date')
+    async getMood(@TypedParam("date") date:string,@Req() req:Request):Promise<Mood|Error>{
         try {
             const userId:number = Number(req.headers.userid);
-            return this.moodService.getMood(userId,date);
+            return await this.moodService.getMood(userId,date);
         } catch (error) {
-            return error;
+            throw error;
         }
     }
     
@@ -110,9 +111,8 @@ export class MoodController {
             const userId:number = Number(req.headers.userid);
             const {date} = body;    
             return await this.moodService.startDeleteMood(userId,date,null);
-        
         } catch (error) {
-            throw error;
+            throw error; 
         }
     }
 

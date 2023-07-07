@@ -38,4 +38,8 @@ export class User{
 
     @OneToMany(()=>WhoMoodRelation,(whoMoodRelation)=>whoMoodRelation.userId)
     relationWho:WhoMoodRelation[]
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7d4d23148228102a5757ea4fd8c646b4d78a0b78
