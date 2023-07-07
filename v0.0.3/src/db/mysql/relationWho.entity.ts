@@ -10,6 +10,7 @@ import { User } from './user.entity';
     @Entity()
     export class WhoMoodRelation{
 
+
         @PrimaryColumn()
         @ManyToOne(() => User,{onDelete:"CASCADE",onUpdate:"CASCADE"})
         @JoinColumn({name:'userId'})

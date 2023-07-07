@@ -8,6 +8,7 @@ import { WhoMoodRelation } from './relationWho.entity';
 
 @Entity()
 export class User{
+    
     @PrimaryGeneratedColumn('increment')
     userId:number;
 

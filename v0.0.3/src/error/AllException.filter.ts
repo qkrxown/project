@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 export class AllExceptionFilter implements ExceptionFilter {
   private logger=new Logger();
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -47,4 +47,5 @@ export class AllExceptionFilter implements ExceptionFilter {
       });
     }
   }
+  
 }

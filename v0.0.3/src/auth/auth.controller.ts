@@ -1,10 +1,10 @@
-import { Controller, Body, Res, UseFilters } from '@nestjs/common';
+import { Controller, Body, Res, UseFilters, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 import { Response } from 'express';
-import { TypedRoute } from '@nestia/core';
+import { TypedBody, TypedRoute } from '@nestia/core';
 import { LoginDto } from 'src/dto/login.dto';
-import { HttpExceptionFilter } from 'src/error/httpexception.filter';
+import { HttpExceptionFilter } from 'src/error/HttpException.filter';
 import { Public } from './auth.decorate';
 import typia from 'typia';
 
@@ -16,18 +16,18 @@ export class AuthController {
   ) {}
 
   @Public()
-  @TypedRoute.Post()
+  @Post()
   async login(
-    @Body() body: LoginDto,
+    @TypedBody() body: LoginDto,
     @Res() res: Response,
   ): Promise<boolean|Error> {
     try {
-      typia.assert<LoginDto>(body);
+      // typia.assert<LoginDto>(body);
       const login = await this.authService.login(body);
       const accessToken = await this.authService.generateAccessToken(login);
       const refreshToken = await this.authService.generateRefreshToken(login);
       
-      // 브라우저 쿠키 저장
+  
       res.header({accessToken:accessToken})
       res.header({userId:login.userId})
       res.header({refreshToken:refreshToken})

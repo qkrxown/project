@@ -18,9 +18,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
             autoLoadEntities:true,
             // entities: [User,Who,Weather,What,Mood,Daily,Weekly,WeatherMoodRelation,WhatMoodRelation,WhoMoodRelation],
             //테스트시 사용 옵션
-            synchronize:true, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성
+            synchronize:false, // 테이블 컬럼 추가및 변경 배포시는 데이터 손실가능성
             logging: false, // query log 보여줌 난 좋은것 같음 
-            dropSchema:true // 서버끄면 스키마 테이블 삭제해줌
+            dropSchema:false // 서버끄면 스키마 테이블 삭제해줌
         }),
 
     ],

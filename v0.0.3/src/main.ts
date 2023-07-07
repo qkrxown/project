@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
-import { HttpExceptionFilter } from './error/httpexception.filter';
+import { HttpExceptionFilter } from './error/HttpException.filter';
 import { AuthGuard } from './auth/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { AllExceptionFilter } from './error/AllException.filter';
@@ -26,7 +26,7 @@ async function bootstrap() {
   
   app.useGlobalFilters(new QueryFailureFilter());
   app.useGlobalFilters(new HttpExceptionFilter());
-  // app.useGlobalFilters(new AllExceptionFilter());
+  app.useGlobalFilters(new AllExceptionFilter());
   await app.listen(3001);
 }
 bootstrap();

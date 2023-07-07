@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable  } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository,Not,EntityManager } from 'typeorm';
 import { Mood } from 'src/db/mysql/mood.entity';
@@ -12,7 +12,7 @@ import { Util } from 'src/util/util';
 import { WeatherMoodRelation } from 'src/db/mysql/relationWeather.entity';
 import { WhatMoodRelation } from 'src/db/mysql/relationWhat.entity';
 import { WhoMoodRelation } from 'src/db/mysql/relationWho.entity';
-import { EncryptedController } from '@nestia/core';
+
 
 var cachedWho: Who[] = [];
 var cachedWhat: What[] = [];
@@ -25,7 +25,8 @@ enum cachedMood {
     "좋음",
     "매우좋음"
 } 
-enum daysOfWeek {
+
+enum daysOfWeek{
     sun,
     mon,
     tue,
@@ -35,6 +36,7 @@ enum daysOfWeek {
     sat
 }
 
+    
 @Injectable()
 export class MoodService {
 
@@ -63,7 +65,13 @@ export class MoodService {
     ){
         this.dbSetup();
     }
-    //체크 완
+    
+    /**
+     * 기분테이블에서 유저아이디와 date를 기반으로 데이터를 가져옵니다. 
+     * @param userId 유저아이디
+     * @param date format YYYY-MM-DD
+     * @returns Mood | Error 
+     */
     getMood =async (userId:number,date:string):Promise<Mood|Error> => {
         try {
 
@@ -85,34 +93,34 @@ export class MoodService {
             throw error;
         }
     }
-    //체크 완
+
+    /**
+     * 기분을 저장합니다. 9단계로 이루어져있고 트랜잭션으로 에러 발생시 롤백됩니다.
+     * @param userId 유저아이디
+     * @param date format YYYY-MM-DD
+     * @param mood 기분 1 ~ 5
+     * @param weather 
+     * @param who 
+     * @param what 
+     * @returns true | Error
+     */
     startSaveMood =async (userId:number, date:string, mood:number, weather:number[],who:number[],what:number[]) => {
  
 
         try {
             const transaction = await this.entityManager.transaction(async transaction=>{
             const step1 = await this.saveMood(transaction,userId,date,mood,weather,who,what);
-            // console.log('1',step1);
             const step2 = await this.updateDailyMood(transaction,userId,date,mood);
-            // console.log('2',step2);
             const step3 = await this.updateDailyMoodAvg(transaction,userId,date);
-            // console.log('3',step3);
             const step4 = await this.updateAllDailyMood(transaction,userId,date);
-            // console.log('4',step4);
             const step5 = await this.updateAllDailyMoodAvg(transaction,userId, date);
-            // console.log('5',step5);
             const step6 = await this.updateWeeklyMood(transaction,userId,date);
-            // console.log('6',step6);
             const step7 = await this.updateWeeklyMoodAvg(transaction,userId,date);
-            // console.log('7',step7);
             const step8 = await this.updateAllWeeklyMood(transaction,userId,date);
-            // console.log('8',step8);
             const step9 = await this.updateAllWeeklyMoodAvg(transaction,userId,date);
-            // console.log('9',step9);
 
             return true;
         });
-
             return transaction; 
         } catch (error) {
 
@@ -120,29 +128,26 @@ export class MoodService {
         }
 
     }
-
+    /**
+     * 기분을 삭제합니다. 9단계로 이루어져있고 트랜잭션으로 에러 발생시 롤백됩니다.
+     * @param userId 유저아이디
+     * @param date format YYYY-MM-DD
+     * @param mood 기분 null
+     * @returns true | Error
+     */
     startDeleteMood =async (userId:number, date:string, mood:null) => {
  
         try {
             const transaction = await this.entityManager.transaction(async transaction=>{
             const step1 = await this.deleteMood(transaction,userId,date);
-            // console.log('1',step1);
             const step2 = await this.updateDailyMood(transaction,userId,date,mood);
-            // console.log('2',step2);
             const step3 = await this.updateDailyMoodAvg(transaction,userId,date);
-            // console.log('3',step3);
             const step4 = await this.updateAllDailyMood(transaction,userId,date);
-            // console.log('4',step4);
             const step5 = await this.updateAllDailyMoodAvg(transaction,userId, date);
-            // console.log('5',step5);
             const step6 = await this.updateWeeklyMood(transaction,userId,date);
-            // console.log('6',step6);
             const step7 = await this.updateWeeklyMoodAvg(transaction,userId,date);
-            // console.log('7',step7);
             const step8 = await this.updateAllWeeklyMood(transaction,userId,date);
-            // console.log('8',step8);
             const step9 = await this.updateAllWeeklyMoodAvg(transaction,userId,date);
-            // console.log('9',step9);
 
             return true;
         });
@@ -156,8 +161,12 @@ export class MoodService {
     }
 
 
-
-    //체크 완
+    /**
+     * 일간테이블에서 유저아이디와 weekNum을 기반으로 요일별 기분과 주 평균 데이터를 가져옵니다. 
+     * @param userId 유저아이디
+     * @param date format YYYY-MM-DD
+     * @returns Daily | Error
+     */
     getDailyMood =async (userId:number,date:string):Promise<Daily|Error> => {
         
         try {
@@ -180,7 +189,12 @@ export class MoodService {
             throw error;
         }
     }
-    //체크 완
+    /**
+     * 주간테이블에서 유저아이디와 month를 기반으로 주 별 기분과 월 평균 데이터를 가져옵니다.
+     * @param userId 유저아이디
+     * @param date format YYYY-MM
+     * @returns Weekly | Error
+     */
     getWeeklyMood =async (userId:number,date:string):Promise<Weekly|Error> => {
 
         try {
@@ -201,7 +215,11 @@ export class MoodService {
             throw error;
         }
     }
-    //체크 완
+    /**
+     * 
+     * @param userId 유저아이디
+     * @returns 
+     */
     getRelation =async (userId:number):Promise<(WeatherMoodRelation | WhatMoodRelation | WhoMoodRelation)[]|Error> => {
         try{
 
@@ -374,36 +392,51 @@ export class MoodService {
     }
 
     //keyof Daily로 switch case문과  type|null 문제 해결되었음
-    private updateAllDailyMood = async (transaction:EntityManager,userId: number, date: string):Promise<boolean|Error> => {
+    private updateAllDailyMood = async (transaction:EntityManager,userId:number, date: string):Promise<boolean|Error> => {
         try {
             const dateClass = new Date(date);
             const year = dateClass.getFullYear();
             const weekNum = moment(dateClass).week();
 
-            const dayOfWeek = new Date(date).getDay();
-            const day = daysOfWeek[dayOfWeek];
-            const average = await transaction.average(Daily,day as keyof Daily, { year, weekNum, userId: Not(0) });
+            const day = dateClass.getDay();
+            let average;
+            switch (day){
+                case 0 :
+                    average = await transaction.average(Daily,'sun',{year,weekNum,userId:Not(1)});
+                    break;
+                case 1 :
+                    average = await transaction.average(Daily,'mon',{year,weekNum,userId:Not(1)});
+                    break;
+                case 2 :
+                    average = await transaction.average(Daily,'tue',{year,weekNum,userId:Not(1)});
+                    break;
+                case 3 :
+                    average = await transaction.average(Daily,'wed',{year,weekNum,userId:Not(1)});
+                    break;
+                case 4 :
+                    average = await transaction.average(Daily,'thu',{year,weekNum,userId:Not(1)});
+                    break;
+                case 5 :
+                    average = await transaction.average(Daily,'fri',{year,weekNum,userId:Not(1)});
+                    break;
+                case 6 :
+                    average = await transaction.average(Daily,'sat',{year,weekNum,userId:Not(1)});
+                    break;
+                default :
+                    average = null;
+                    break;
+            }
+            
+            
 
-            const updateCondition = { userId: 0, year, weekNum };
-            let updateData:object;
-            let roundedAverage:number|null;    
-        if (average === null) {
-            updateData = {[day]: null};
-            roundedAverage = null;
-        }else{
-            roundedAverage = Math.round(average);
-            updateData = { [day]:  roundedAverage };
-            
-        }
-            
-            const updateAllDailyMood = await transaction.update(Daily,updateCondition, updateData);
-            
+            const updateAllDailyMood = await transaction.update(Daily,{userId:1,year,weekNum},{[daysOfWeek[day]]:average})
+
             if (updateAllDailyMood.affected == 0) {
                 const model = new Daily();
-                model.userId = 0;
+                model.userId = 1;
                 model.year = year;
                 model.weekNum = weekNum;
-                model[day] = roundedAverage;
+                model[daysOfWeek[day]] = Math.round(average) ?? null;
                 
                 const saveAllDailyMood = await transaction.save(Daily,model);
                 if(!saveAllDailyMood){
@@ -413,11 +446,27 @@ export class MoodService {
             }else{
                 return true;
             }
-        
 
         } catch (error) {
-        throw error;
+            throw error;
         }
+
+        //     const average = await transaction.average(Daily, "" , { year, weekNum, userId:Not(1)});
+
+        //     const updateCondition = { userId: 1, year, weekNum };
+        //     let updateData:object;
+        //     let roundedAverage:number|null;    
+        // if (average === null) {
+        //     updateData = {[day]: null};
+        //     roundedAverage = null;
+        // }else{
+        //     roundedAverage = Math.round(average);
+        //     updateData = { [day]:  roundedAverage };
+            
+        // }
+            
+            
+
     }
     // 체크 완
     private updateAllDailyMoodAvg = async (transaction:EntityManager,userId:number,date:string):Promise<boolean|Error> => {
@@ -426,7 +475,7 @@ export class MoodService {
             
             const savedAllDailyMood = await transaction.findOne(Daily,{
                 where:{
-                userId:0,
+                userId:1,
                 year:dateClass.getFullYear(),
                 weekNum:moment(dateClass).week()
             }
@@ -442,7 +491,7 @@ export class MoodService {
                 
                 if(weekAvg == null){
                     const updateAllDailyMoodAvg = await transaction.delete(Daily,{
-                        userId:0,
+                        userId:1,
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
                     })
@@ -452,7 +501,7 @@ export class MoodService {
                     return true;
                 }else{
                     const updateAllDailyMoodAvg = await transaction.update(Daily,{
-                        userId:0,
+                        userId:1,
                         year:dateClass.getFullYear(),
                         weekNum:moment(dateClass).week()
                     },{weekAvg: weekAvg});
@@ -573,7 +622,7 @@ export class MoodService {
             const dateClass = new Date(date);
             const savedAllDailyMood = await transaction.findOne(Daily,{
                 where:{
-                userId:0,
+                userId:1,
                 year:dateClass.getFullYear(),
                 weekNum:moment(dateClass).week()
                 }
@@ -594,7 +643,7 @@ export class MoodService {
             }
 
             const updateAllWeeklyMood = await transaction.update(Weekly,{
-                userId:0,
+                userId:1,
                 month:moment(dateClass).format('YYYY-MM'),
             },obj);
             
@@ -604,7 +653,7 @@ export class MoodService {
                 
             }else{
                 const weekly = await transaction.create(Weekly,{
-                    userId:0,
+                    userId:1,
                     month:moment(dateClass).format('YYYY-MM'),
                     ...obj
                 })
@@ -627,7 +676,7 @@ export class MoodService {
         try{             
             const savedAllWeeklyMood = await transaction.findOne(Weekly,{
                 where:{
-                    userId:0,
+                    userId:1,
                     month:moment(dateClass).format('YYYY-MM'),
                 }
             })
@@ -642,7 +691,7 @@ export class MoodService {
                 if(monthAvg == null){
                     
                     const updateAllWeeklyMoodAvg = await transaction.delete(Weekly,{
-                        userId:0,
+                        userId:1,
                         month:moment(dateClass).format('YYYY-MM'),
                     });
                     if(updateAllWeeklyMoodAvg.affected==0){
@@ -654,7 +703,7 @@ export class MoodService {
                 }else{
                     
                     const updateAllWeeklyMoodAvg = await transaction.update(Weekly,{
-                        userId:0,
+                        userId:1,
                         month:moment(dateClass).format('YYYY-MM'),
                     },{monthAvg:monthAvg});
                     

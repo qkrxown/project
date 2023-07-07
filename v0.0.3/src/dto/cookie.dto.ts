@@ -1,7 +1,7 @@
 
 export interface CookieDto{
 
-    userId: number;
+    userId: string;
 
     accessToken: string;
 
